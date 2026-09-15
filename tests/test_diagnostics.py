@@ -1,6 +1,6 @@
 import socket
 
-from netscope.diagnostics import resolve_hostname
+from netscope.diagnostics import check_tcp, resolve_hostname
 
 
 def test_resolve_hostname_deduplicates_and_sorts(monkeypatch):
@@ -34,3 +34,54 @@ def test_resolve_hostname_normalizes_resolver_error(monkeypatch):
 
     assert result.ok is False
     assert result.error == "not found"
+
+
+class FakeSocket:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return None
+
+
+def test_check_tcp_reports_success_and_latency(monkeypatch):
+    monkeypatch.setattr(socket, "create_connection", lambda address, timeout: FakeSocket())
+    ticks = iter((10.0, 10.01234))
+    monkeypatch.setattr("netscope.diagnostics.time.monotonic", lambda: next(ticks))
+
+    result = check_tcp("example.test", 443, timeout=2.0)
+
+    assert result.ok is True
+    assert result.host == "example.test"
+    assert result.port == 443
+    assert result.latency_ms == 12.34
+    assert result.error is None
+
+
+def test_check_tcp_normalizes_connection_failure(monkeypatch):
+    def fail(*args, **kwargs):
+        raise ConnectionRefusedError("refused")
+
+    monkeypatch.setattr(socket, "create_connection", fail)
+    result = check_tcp("example.test", 443)
+
+    assert result.ok is False
+    assert result.error == "refused"
+    assert result.latency_ms is None
+
+
+def test_check_tcp_validates_port_without_connecting(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("network should not be touched")
+
+    monkeypatch.setattr(socket, "create_connection", unexpected)
+    result = check_tcp("example.test", 70000)
+
+    assert result.ok is False
+    assert result.error == "port must be between 1 and 65535"
+
+
+def test_check_tcp_caps_timeout():
+    result = check_tcp("example.test", 443, timeout=31)
+    assert result.ok is False
+    assert result.error == "timeout must be greater than 0 and at most 30 seconds"
