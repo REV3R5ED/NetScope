@@ -10,7 +10,7 @@ NetScope aims to make common network diagnostics easy to run, understand, automa
 
 Current/planned capabilities include:
 
-- local interface and address visibility
+- local interface visibility
 - DNS resolution diagnostics
 - bounded single-target TCP connectivity checks
 - latency and reachability summaries
@@ -23,6 +23,8 @@ Requires Python 3.10+.
 
 ```bash
 python -m pip install -e '.[dev]'
+netscope interfaces
+netscope interfaces --json
 netscope dns example.com
 netscope dns example.com --json
 netscope tcp example.com 443
@@ -30,7 +32,7 @@ netscope tcp example.com 443 --timeout 2 --json
 pytest -q
 ```
 
-DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured JSON workflow.
+Interface inspection reads only interface names exposed by the local operating system and does not probe remote hosts. DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured JSON workflow.
 
 ## Safety Scope
 
@@ -41,7 +43,7 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 ### v0.1 — Foundation
 - [x] Python package and CLI skeleton
 - [x] shared normalized result models
-- [ ] interface inspection
+- [x] interface inspection
 - [x] DNS diagnostics
 - [x] bounded TCP connectivity checks
 - [x] JSON output
