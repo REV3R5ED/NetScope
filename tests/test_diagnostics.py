@@ -1,6 +1,6 @@
 import socket
 
-from netscope.diagnostics import check_tcp, resolve_hostname
+from netscope.diagnostics import check_tcp, inspect_interfaces, resolve_hostname
 
 
 def test_resolve_hostname_deduplicates_and_sorts(monkeypatch):
@@ -34,6 +34,41 @@ def test_resolve_hostname_normalizes_resolver_error(monkeypatch):
 
     assert result.ok is False
     assert result.error == "not found"
+
+
+def test_inspect_interfaces_normalizes_and_sorts(monkeypatch):
+    monkeypatch.setattr(socket, "gethostname", lambda: "workstation")
+    monkeypatch.setattr(socket, "if_nameindex", lambda: [(2, "eth0"), (1, "lo"), (3, "eth0")])
+    records = [
+        (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.0.2.20", 0)),
+        (socket.AF_INET6, socket.SOCK_STREAM, 6, "", ("2001:db8::20", 0, 0, 0)),
+        (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.0.2.20", 0)),
+    ]
+    monkeypatch.setattr(socket, "getaddrinfo", lambda *args, **kwargs: records)
+
+    result = inspect_interfaces()
+
+    assert result.ok is True
+    assert result.hostname == "workstation"
+    assert result.interfaces == ("eth0", "lo")
+    assert result.addresses == ("192.0.2.20", "2001:db8::20")
+    assert result.error is None
+
+
+def test_inspect_interfaces_normalizes_os_error(monkeypatch):
+    monkeypatch.setattr(socket, "gethostname", lambda: "workstation")
+
+    def fail():
+        raise OSError("interface lookup unavailable")
+
+    monkeypatch.setattr(socket, "if_nameindex", fail)
+    result = inspect_interfaces()
+
+    assert result.ok is False
+    assert result.hostname == "workstation"
+    assert result.interfaces == ()
+    assert result.addresses == ()
+    assert result.error == "interface lookup unavailable"
 
 
 class FakeSocket:
