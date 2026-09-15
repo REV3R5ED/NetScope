@@ -6,7 +6,7 @@ import argparse
 import json
 
 from . import __version__
-from .diagnostics import check_tcp, inspect_interfaces, resolve_hostname
+from .diagnostics import check_tcp, inspect_interfaces, resolve_hostname, summarize_tcp
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,6 +26,13 @@ def build_parser() -> argparse.ArgumentParser:
     tcp.add_argument("port", type=int)
     tcp.add_argument("--timeout", type=float, default=3.0, help="Connection timeout in seconds (max 30)")
     tcp.add_argument("--json", action="store_true", dest="as_json", help="Emit machine-readable JSON")
+
+    summary = subparsers.add_parser("tcp-summary", help="Summarize bounded latency checks for one endpoint")
+    summary.add_argument("host")
+    summary.add_argument("port", type=int)
+    summary.add_argument("--count", type=int, default=3, help="Connection attempts (1-10, default 3)")
+    summary.add_argument("--timeout", type=float, default=3.0, help="Per-attempt timeout in seconds (max 30)")
+    summary.add_argument("--json", action="store_true", dest="as_json", help="Emit machine-readable JSON")
     return parser
 
 
@@ -62,6 +69,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{result.host}:{result.port}: reachable ({result.latency_ms:.2f} ms)")
         else:
             print(f"{result.host}:{result.port}: connection failed: {result.error}")
+        return 0 if result.ok else 1
+
+    if args.command == "tcp-summary":
+        result = summarize_tcp(args.host, args.port, args.count, args.timeout)
+        if args.as_json:
+            print(json.dumps(result.to_dict(), indent=2))
+        elif result.ok:
+            print(f"{result.host}:{result.port}: {result.successes}/{result.attempts} successful")
+            print(
+                f"Latency ms: min {result.min_latency_ms:.2f}, "
+                f"avg {result.avg_latency_ms:.2f}, max {result.max_latency_ms:.2f}"
+            )
+            if result.failures:
+                print(f"Failures: {result.failures}")
+        else:
+            detail = result.errors[0] if result.errors else "no successful connections"
+            print(f"{result.host}:{result.port}: summary failed: {detail}")
         return 0 if result.ok else 1
 
     return 2
