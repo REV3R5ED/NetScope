@@ -1,6 +1,6 @@
 import socket
 
-from netscope.diagnostics import check_tcp, inspect_interfaces, resolve_hostname
+from netscope.diagnostics import check_tcp, inspect_interfaces, resolve_hostname, summarize_tcp
 
 
 def test_resolve_hostname_deduplicates_and_sorts(monkeypatch):
@@ -120,3 +120,48 @@ def test_check_tcp_caps_timeout():
     result = check_tcp("example.test", 443, timeout=31)
     assert result.ok is False
     assert result.error == "timeout must be greater than 0 and at most 30 seconds"
+
+
+def test_summarize_tcp_calculates_latency_and_failures(monkeypatch):
+    results = iter([
+        type("R", (), {"ok": True, "latency_ms": 10.0, "error": None})(),
+        type("R", (), {"ok": False, "latency_ms": None, "error": "refused"})(),
+        type("R", (), {"ok": True, "latency_ms": 20.0, "error": None})(),
+    ])
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", lambda *args, **kwargs: next(results))
+
+    result = summarize_tcp("example.test", 443, count=3)
+
+    assert result.ok is True
+    assert result.attempts == 3
+    assert result.successes == 2
+    assert result.failures == 1
+    assert result.min_latency_ms == 10.0
+    assert result.avg_latency_ms == 15.0
+    assert result.max_latency_ms == 20.0
+    assert result.errors == ("refused",)
+
+
+def test_summarize_tcp_rejects_unbounded_count(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("network should not be touched")
+
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", unexpected)
+    result = summarize_tcp("example.test", 443, count=11)
+
+    assert result.ok is False
+    assert result.attempts == 0
+    assert result.errors == ("count must be between 1 and 10",)
+
+
+def test_summarize_tcp_reports_all_failures(monkeypatch):
+    failure = type("R", (), {"ok": False, "latency_ms": None, "error": "timed out"})()
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", lambda *args, **kwargs: failure)
+
+    result = summarize_tcp("example.test", 443, count=2)
+
+    assert result.ok is False
+    assert result.successes == 0
+    assert result.failures == 2
+    assert result.min_latency_ms is None
+    assert result.errors == ("timed out", "timed out")
