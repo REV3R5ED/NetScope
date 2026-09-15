@@ -1,6 +1,28 @@
 import socket
 
-from netscope.diagnostics import check_tcp, resolve_hostname
+from netscope.diagnostics import check_tcp, inspect_interfaces, resolve_hostname
+
+
+def test_inspect_interfaces_sorts_names(monkeypatch):
+    monkeypatch.setattr(socket, "if_nameindex", lambda: [(2, "eth0"), (1, "lo")])
+
+    result = inspect_interfaces()
+
+    assert result.ok is True
+    assert result.interfaces == ("eth0", "lo")
+    assert result.error is None
+
+
+def test_inspect_interfaces_normalizes_os_error(monkeypatch):
+    def fail():
+        raise OSError("not supported")
+
+    monkeypatch.setattr(socket, "if_nameindex", fail)
+    result = inspect_interfaces()
+
+    assert result.ok is False
+    assert result.interfaces == ()
+    assert result.error == "not supported"
 
 
 def test_resolve_hostname_deduplicates_and_sorts(monkeypatch):
