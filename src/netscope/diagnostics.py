@@ -34,6 +34,28 @@ class TCPResult:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class InterfaceResult:
+    """Local interface names visible to the operating system."""
+
+    interfaces: tuple[str, ...]
+    ok: bool
+    error: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
+def inspect_interfaces() -> InterfaceResult:
+    """Return local interface names without probing any remote systems."""
+    try:
+        interfaces = tuple(sorted(name for _, name in socket.if_nameindex()))
+    except OSError as exc:
+        return InterfaceResult(interfaces=(), ok=False, error=str(exc))
+
+    return InterfaceResult(interfaces=interfaces, ok=True)
+
+
 def resolve_hostname(hostname: str) -> DNSResult:
     """Resolve a hostname using the OS resolver without scanning or probing hosts."""
     target = hostname.strip()
