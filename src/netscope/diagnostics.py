@@ -35,6 +35,25 @@ class TCPResult:
 
 
 @dataclass(frozen=True)
+class TCPSummaryResult:
+    """Bounded latency summary for repeated checks of one explicit endpoint."""
+
+    host: str
+    port: int
+    attempts: int
+    successes: int
+    failures: int
+    min_latency_ms: float | None
+    avg_latency_ms: float | None
+    max_latency_ms: float | None
+    ok: bool
+    errors: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class InterfaceResult:
     """Read-only summary of interfaces and addresses visible to the OS."""
 
@@ -116,3 +135,35 @@ def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
         return TCPResult(host=target, port=port, ok=False, error=str(exc))
 
     return TCPResult(host=target, port=port, ok=True, latency_ms=latency_ms)
+
+
+def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) -> TCPSummaryResult:
+    """Summarize up to ten connection attempts to one explicit endpoint.
+
+    The small hard cap keeps this diagnostic bounded. It never expands a host,
+    network, or port range and delegates all endpoint validation to ``check_tcp``.
+    """
+    target = host.strip()
+    if not 1 <= count <= 10:
+        return TCPSummaryResult(target, port, 0, 0, 0, None, None, None, False, ("count must be between 1 and 10",))
+
+    results = tuple(check_tcp(host, port, timeout) for _ in range(count))
+    latencies = tuple(result.latency_ms for result in results if result.ok and result.latency_ms is not None)
+    errors = tuple(result.error or "unknown connection error" for result in results if not result.ok)
+    successes = len(latencies)
+
+    if not latencies:
+        return TCPSummaryResult(target, port, count, 0, count, None, None, None, False, errors)
+
+    return TCPSummaryResult(
+        host=target,
+        port=port,
+        attempts=count,
+        successes=successes,
+        failures=count - successes,
+        min_latency_ms=round(min(latencies), 2),
+        avg_latency_ms=round(sum(latencies) / successes, 2),
+        max_latency_ms=round(max(latencies), 2),
+        ok=True,
+        errors=errors,
+    )
