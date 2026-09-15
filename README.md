@@ -2,7 +2,7 @@
 
 Defensive network visibility and diagnostics toolkit for operators, IT professionals, and security engineers.
 
-> Status: v0.2 visibility milestone feature-complete; release hardening next
+> Status: v0.2 visibility milestone feature-complete; release hardening in progress
 
 ## Goals
 
@@ -72,14 +72,14 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] improved cross-platform behavior
 
 ### Next — Release hardening
-- [ ] expand CLI integration tests
+- [x] expand CLI integration tests
 - [ ] add changelog and release notes
 - [ ] finalize project license
 - [ ] prepare tagged portfolio release
 
 ## Development
 
-The v0.2 visibility milestone is feature-complete. Current work moves to release hardening, CLI integration coverage, documentation polish, and packaging readiness. CI runs the test suite across Python 3.10–3.13.
+The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, including human-readable, JSON, CSV, failure-exit, and argument-validation behavior. CI runs the full test suite across Python 3.10–3.13. Remaining work is documentation/release polish, license selection, and tagged-release preparation.
 
 ## License
 
