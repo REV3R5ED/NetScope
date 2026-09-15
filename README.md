@@ -14,7 +14,7 @@ Current/planned capabilities include:
 - DNS resolution diagnostics
 - bounded single-target TCP connectivity checks
 - bounded latency and reachability summaries
-- structured JSON output for automation
+- structured JSON and CSV output for automation and reporting
 - clear, human-readable CLI reports
 
 ## Quick start
@@ -27,18 +27,23 @@ netscope interfaces
 netscope interfaces --json
 netscope dns example.com
 netscope dns example.com --json
+netscope dns example.com --csv
 netscope tcp example.com 443
 netscope tcp example.com 443 --timeout 2 --json
 netscope tcp-summary example.com 443 --count 5
-netscope tcp-summary example.com 443 --count 5 --json
+netscope tcp-summary example.com 443 --count 5 --csv
 pytest -q
 ```
 
 `netscope interfaces` performs read-only local inspection: it reports the OS-visible interface names, local hostname, and addresses returned for that hostname by the system resolver. Because Python's standard library does not provide a portable interface-to-address mapping, NetScope deliberately reports interface names and host addresses as separate collections rather than guessing an association.
 
-DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured JSON workflow.
+DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured reporting workflow.
 
-`netscope tcp-summary` repeats that same single-endpoint diagnostic a small, explicitly bounded number of times (default 3, maximum 10). It reports successful and failed attempts plus minimum, average, and maximum connection latency. Partial failures remain visible in both terminal and JSON output rather than being discarded.
+`netscope tcp-summary` repeats that same single-endpoint diagnostic a small, explicitly bounded number of times (default 3, maximum 10). It reports successful and failed attempts plus minimum, average, and maximum connection latency. Partial failures remain visible in terminal, JSON, and CSV output rather than being discarded.
+
+### Exportable reports
+
+Every diagnostic command supports either `--json` or `--csv`. The options are mutually exclusive to prevent ambiguous output. CSV exports use a deterministic one-record schema based on the normalized result model; compound fields such as addresses and error collections are compact JSON inside the CSV cell so their structure is preserved for spreadsheets and downstream tooling.
 
 ## Safety Scope
 
@@ -58,12 +63,12 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 ### v0.2 — Visibility
 - [x] richer latency summaries
 - [ ] route/path diagnostics
-- [ ] exportable reports
+- [x] exportable reports
 - [ ] improved cross-platform behavior
 
 ## Development
 
-The v0.1 feature foundation is complete and v0.2 visibility work has started. Current work focuses on bounded diagnostic depth, portability, CLI ergonomics, and release readiness. CI runs the test suite across Python 3.10–3.13.
+The v0.1 feature foundation is complete and v0.2 visibility work is underway. Current work focuses on bounded diagnostic depth, portability, CLI ergonomics, export workflows, and release readiness. CI runs the test suite across Python 3.10–3.13.
 
 ## License
 
