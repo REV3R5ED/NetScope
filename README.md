@@ -35,7 +35,7 @@ netscope tcp-summary example.com 443 --count 5 --csv
 pytest -q
 ```
 
-`netscope interfaces` performs read-only local inspection: it reports the OS-visible interface names, local hostname, and addresses returned for that hostname by the system resolver. Because Python's standard library does not provide a portable interface-to-address mapping, NetScope deliberately reports interface names and host addresses as separate collections rather than guessing an association.
+`netscope interfaces` performs read-only local inspection: it reports the OS-visible interface names, local hostname, and addresses returned for that hostname by the system resolver. Because Python's standard library does not provide a portable interface-to-address mapping, NetScope deliberately reports interface names and host addresses as separate collections rather than guessing an association. On Python/platform combinations without `socket.if_nameindex`, the command now degrades gracefully: it still reports resolved local-host addresses and includes a structured warning that interface enumeration is unavailable.
 
 DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured reporting workflow.
 
@@ -64,11 +64,11 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] richer latency summaries
 - [ ] route/path diagnostics
 - [x] exportable reports
-- [ ] improved cross-platform behavior
+- [x] improved cross-platform behavior
 
 ## Development
 
-The v0.1 feature foundation is complete and v0.2 visibility work is underway. Current work focuses on bounded diagnostic depth, portability, CLI ergonomics, export workflows, and release readiness. CI runs the test suite across Python 3.10–3.13.
+The v0.1 feature foundation is complete and v0.2 visibility work is underway. Current work focuses on bounded diagnostic depth, portability, CLI ergonomics, export workflows, and release readiness. CI runs the test suite across Python 3.10–3.13. Cross-platform interface inspection now preserves useful local address visibility when the optional interface-name API is absent instead of failing the whole command.
 
 ## License
 

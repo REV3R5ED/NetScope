@@ -85,30 +85,33 @@ def resolve_hostname(hostname: str) -> DNSResult:
 def inspect_interfaces() -> InterfaceResult:
     """Inspect local network identity without sending network traffic.
 
-    Interface names come from the operating system and addresses come from the
-    system resolver for the local hostname. The standard library does not offer
-    a portable interface-to-address mapping, so NetScope intentionally reports
-    these as separate normalized collections rather than guessing associations.
+    Some Python/platform combinations do not expose ``socket.if_nameindex``.
+    In that case NetScope still reports local-host addresses instead of failing
+    the entire read-only diagnostic. OS errors from an available interface API
+    remain explicit failures rather than being silently hidden.
     """
     hostname = socket.gethostname()
+    interface_warning: str | None = None
     try:
         interfaces = tuple(sorted({name for _, name in socket.if_nameindex()}))
+    except AttributeError:
+        interfaces = ()
+        interface_warning = "interface enumeration unavailable on this platform"
+    except OSError as exc:
+        return InterfaceResult(hostname, (), (), False, str(exc))
+
+    try:
         records = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
         addresses = tuple(sorted({record[4][0] for record in records}))
     except OSError as exc:
-        return InterfaceResult(
-            hostname=hostname,
-            interfaces=(),
-            addresses=(),
-            ok=False,
-            error=str(exc),
-        )
+        return InterfaceResult(hostname, interfaces, (), False, str(exc))
 
     return InterfaceResult(
         hostname=hostname,
         interfaces=interfaces,
         addresses=addresses,
         ok=True,
+        error=interface_warning,
     )
 
 
