@@ -34,6 +34,20 @@ class TCPResult:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class InterfaceResult:
+    """Read-only summary of interfaces and addresses visible to the OS."""
+
+    hostname: str
+    interfaces: tuple[str, ...]
+    addresses: tuple[str, ...]
+    ok: bool
+    error: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
 def resolve_hostname(hostname: str) -> DNSResult:
     """Resolve a hostname using the OS resolver without scanning or probing hosts."""
     target = hostname.strip()
@@ -47,6 +61,36 @@ def resolve_hostname(hostname: str) -> DNSResult:
 
     addresses = tuple(sorted({record[4][0] for record in records}))
     return DNSResult(hostname=target, addresses=addresses, ok=True)
+
+
+def inspect_interfaces() -> InterfaceResult:
+    """Inspect local network identity without sending network traffic.
+
+    Interface names come from the operating system and addresses come from the
+    system resolver for the local hostname. The standard library does not offer
+    a portable interface-to-address mapping, so NetScope intentionally reports
+    these as separate normalized collections rather than guessing associations.
+    """
+    hostname = socket.gethostname()
+    try:
+        interfaces = tuple(sorted({name for _, name in socket.if_nameindex()}))
+        records = socket.getaddrinfo(hostname, None, type=socket.SOCK_STREAM)
+        addresses = tuple(sorted({record[4][0] for record in records}))
+    except OSError as exc:
+        return InterfaceResult(
+            hostname=hostname,
+            interfaces=(),
+            addresses=(),
+            ok=False,
+            error=str(exc),
+        )
+
+    return InterfaceResult(
+        hostname=hostname,
+        interfaces=interfaces,
+        addresses=addresses,
+        ok=True,
+    )
 
 
 def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
