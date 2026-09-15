@@ -2,7 +2,7 @@
 
 Defensive network visibility and diagnostics toolkit for operators, IT professionals, and security engineers.
 
-> Status: v0.1 foundation feature-complete; hardening in progress
+> Status: v0.1 foundation feature-complete; v0.2 visibility work in progress
 
 ## Goals
 
@@ -13,7 +13,7 @@ Current/planned capabilities include:
 - local interface and address visibility
 - DNS resolution diagnostics
 - bounded single-target TCP connectivity checks
-- latency and reachability summaries
+- bounded latency and reachability summaries
 - structured JSON output for automation
 - clear, human-readable CLI reports
 
@@ -29,6 +29,8 @@ netscope dns example.com
 netscope dns example.com --json
 netscope tcp example.com 443
 netscope tcp example.com 443 --timeout 2 --json
+netscope tcp-summary example.com 443 --count 5
+netscope tcp-summary example.com 443 --count 5 --json
 pytest -q
 ```
 
@@ -36,9 +38,11 @@ pytest -q
 
 DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured JSON workflow.
 
+`netscope tcp-summary` repeats that same single-endpoint diagnostic a small, explicitly bounded number of times (default 3, maximum 10). It reports successful and failed attempts plus minimum, average, and maximum connection latency. Partial failures remain visible in both terminal and JSON output rather than being discarded.
+
 ## Safety Scope
 
-NetScope is designed for defensive diagnostics and authorized environments. Development intentionally avoids exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning. The TCP command accepts one explicit host and one explicit port per invocation. Interface inspection is local and sends no probing traffic.
+NetScope is designed for defensive diagnostics and authorized environments. Development intentionally avoids exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning. TCP commands accept one explicit host and one explicit port per invocation. Summary checks are hard-capped at 10 attempts and never expand targets or ports. Interface inspection is local and sends no probing traffic.
 
 ## Roadmap
 
@@ -52,14 +56,14 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] unit tests and CI
 
 ### v0.2 — Visibility
-- [ ] richer latency summaries
+- [x] richer latency summaries
 - [ ] route/path diagnostics
 - [ ] exportable reports
 - [ ] improved cross-platform behavior
 
 ## Development
 
-The v0.1 feature foundation is complete. Current work focuses on hardening, portability, CLI ergonomics, and release readiness. CI runs the test suite across Python 3.10–3.13.
+The v0.1 feature foundation is complete and v0.2 visibility work has started. Current work focuses on bounded diagnostic depth, portability, CLI ergonomics, and release readiness. CI runs the test suite across Python 3.10–3.13.
 
 ## License
 
