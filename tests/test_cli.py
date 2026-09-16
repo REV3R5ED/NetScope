@@ -86,6 +86,28 @@ def test_tcp_summary_health_gates_are_mutually_exclusive():
     assert exc.value.code == 2
 
 
+def test_tcp_summary_max_jitter_fails_above_threshold(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
+    assert cli.main(["tcp-summary", "example.com", "443", "--max-jitter-ms", "4", "--json"]) == 1
+    assert json.loads(capsys.readouterr().out)["jitter_ms"] == 4.08
+
+
+def test_tcp_summary_max_jitter_succeeds_at_threshold(monkeypatch):
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
+    assert cli.main(["tcp-summary", "example.com", "443", "--max-jitter-ms", "4.08", "--json"]) == 0
+
+
+def test_tcp_summary_max_jitter_rejects_negative_value():
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["tcp-summary", "example.com", "443", "--max-jitter-ms", "-0.1"])
+    assert exc.value.code == 2
+
+
+def test_tcp_summary_combines_success_rate_and_jitter_gates(monkeypatch):
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
+    assert cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", "60", "--max-jitter-ms", "4"]) == 1
+
+
 def test_path_json_output(monkeypatch, capsys):
     result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms",), False, True, "destination not reached")
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
