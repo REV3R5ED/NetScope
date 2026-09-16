@@ -27,16 +27,21 @@ def _result_dict(result: object) -> dict[str, object]:
     return normalized
 
 
+def _valid_port(port: object) -> bool:
+    return isinstance(port, int) and not isinstance(port, bool) and 1 <= port <= 65535
+
+
+def _valid_timeout(timeout: object, maximum: float) -> bool:
+    return isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and math.isfinite(timeout) and 0 < timeout <= maximum
+
+
 @dataclass(frozen=True)
 class DNSResult:
     hostname: str
     addresses: tuple[str, ...]
     ok: bool
     error: str | None = None
-
-    def to_dict(self) -> dict[str, object]:
-        return _result_dict(self)
-
+    def to_dict(self) -> dict[str, object]: return _result_dict(self)
 
 @dataclass(frozen=True)
 class TCPResult:
@@ -45,10 +50,7 @@ class TCPResult:
     ok: bool
     latency_ms: float | None = None
     error: str | None = None
-
-    def to_dict(self) -> dict[str, object]:
-        return _result_dict(self)
-
+    def to_dict(self) -> dict[str, object]: return _result_dict(self)
 
 @dataclass(frozen=True)
 class TCPSummaryResult:
@@ -64,10 +66,7 @@ class TCPSummaryResult:
     jitter_ms: float | None
     ok: bool
     errors: tuple[str, ...] = ()
-
-    def to_dict(self) -> dict[str, object]:
-        return _result_dict(self)
-
+    def to_dict(self) -> dict[str, object]: return _result_dict(self)
 
 @dataclass(frozen=True)
 class InterfaceResult:
@@ -76,10 +75,7 @@ class InterfaceResult:
     addresses: tuple[str, ...]
     ok: bool
     error: str | None = None
-
-    def to_dict(self) -> dict[str, object]:
-        return _result_dict(self)
-
+    def to_dict(self) -> dict[str, object]: return _result_dict(self)
 
 @dataclass(frozen=True)
 class PathResult:
@@ -89,9 +85,7 @@ class PathResult:
     reached: bool
     ok: bool
     error: str | None = None
-
-    def to_dict(self) -> dict[str, object]:
-        return _result_dict(self)
+    def to_dict(self) -> dict[str, object]: return _result_dict(self)
 
 
 def resolve_hostname(hostname: str) -> DNSResult:
@@ -117,7 +111,6 @@ def inspect_interfaces() -> InterfaceResult:
         return InterfaceResult("", (), (), False, str(exc))
     if not hostname:
         return InterfaceResult("", (), (), False, "local hostname is unavailable")
-
     interface_warning: str | None = None
     try:
         interfaces = tuple(sorted({name for _, name in socket.if_nameindex()}))
@@ -141,9 +134,9 @@ def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
     target = host.strip()
     if not target:
         return TCPResult(host=host, port=port, ok=False, error="host is required")
-    if not 1 <= port <= 65535:
+    if not _valid_port(port):
         return TCPResult(host=target, port=port, ok=False, error="port must be between 1 and 65535")
-    if not math.isfinite(timeout) or timeout <= 0 or timeout > 30:
+    if not _valid_timeout(timeout, 30):
         return TCPResult(host=target, port=port, ok=False, error="timeout must be finite, greater than 0, and at most 30 seconds")
     started = time.monotonic()
     try:
@@ -160,15 +153,14 @@ def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) ->
     validation_error: str | None = None
     if not target:
         validation_error = "host is required"
-    elif not 1 <= port <= 65535:
+    elif not _valid_port(port):
         validation_error = "port must be between 1 and 65535"
-    elif not math.isfinite(timeout) or timeout <= 0 or timeout > 30:
+    elif not _valid_timeout(timeout, 30):
         validation_error = "timeout must be finite, greater than 0, and at most 30 seconds"
-    elif not 1 <= count <= 10:
+    elif not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= 10:
         validation_error = "count must be between 1 and 10"
     if validation_error:
         return TCPSummaryResult(target, port, 0, 0, 0, 0.0, None, None, None, None, False, (validation_error,))
-
     results = tuple(check_tcp(target, port, timeout) for _ in range(count))
     latencies = tuple(result.latency_ms for result in results if result.ok and result.latency_ms is not None)
     errors = tuple(result.error or "unknown connection error" for result in results if not result.ok)
@@ -187,22 +179,19 @@ def trace_path(host: str, max_hops: int = 15, timeout: float = 2.0) -> PathResul
         return PathResult(host, max_hops, (), False, False, "host is required")
     if target.startswith("-"):
         return PathResult(target, max_hops, (), False, False, "host must not begin with '-'")
-    if not 1 <= max_hops <= 30:
+    if not isinstance(max_hops, int) or isinstance(max_hops, bool) or not 1 <= max_hops <= 30:
         return PathResult(target, max_hops, (), False, False, "max hops must be between 1 and 30")
-    if not math.isfinite(timeout) or timeout <= 0 or timeout > 10:
+    if not _valid_timeout(timeout, 10):
         return PathResult(target, max_hops, (), False, False, "timeout must be finite, greater than 0, and at most 10 seconds")
-
     is_windows = platform.system().lower() == "windows"
     executable = "tracert" if is_windows else "traceroute"
     command = [executable, "-d", "-h", str(max_hops), "-w", str(int(timeout * 1000)), target] if is_windows else [executable, "-n", "-m", str(max_hops), "-w", str(timeout), target]
     if shutil.which(executable) is None:
         return PathResult(target, max_hops, (), False, False, f"{executable} is not available on this system")
-
     try:
         completed = subprocess.run(command, capture_output=True, text=True, timeout=min(max_hops * timeout + 5, 305), check=False)
     except (OSError, subprocess.TimeoutExpired) as exc:
         return PathResult(target, max_hops, (), False, False, str(exc))
-
     hops = tuple(line.strip() for line in completed.stdout.splitlines() if line.strip() and line.lstrip()[:1].isdigit())
     reached = completed.returncode == 0
     error = None if reached else (completed.stderr.strip() or "destination was not reached within the bounded trace")
