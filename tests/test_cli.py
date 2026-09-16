@@ -16,8 +16,6 @@ def test_interfaces_json_output(monkeypatch, capsys):
 
     assert cli.main(["interfaces", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
-    # JSON arrays deserialize as lists even when the internal immutable model
-    # intentionally stores these collections as tuples.
     expected = json.loads(json.dumps(result.to_dict()))
     assert payload == expected
 
@@ -77,6 +75,23 @@ def test_path_json_output(monkeypatch, capsys):
     assert payload["host"] == "example.com"
     assert payload["max_hops"] == 12
     assert payload["reached"] is False
+
+
+def test_path_require_reached_returns_nonzero_when_destination_not_reached(monkeypatch, capsys):
+    result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms",), False, True, "destination not reached")
+    monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
+
+    assert cli.main(["path", "example.com", "--require-reached", "--json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["reached"] is False
+    assert payload["ok"] is True
+
+
+def test_path_require_reached_succeeds_when_destination_reached(monkeypatch):
+    result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms", "2 192.0.2.2 2.0 ms"), True, True)
+    monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
+
+    assert cli.main(["path", "example.com", "--require-reached", "--json"]) == 0
 
 
 def test_output_formats_are_mutually_exclusive():
