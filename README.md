@@ -74,15 +74,15 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 ### Next — Release hardening
 - [x] expand CLI integration tests
 - [x] add changelog and release notes
-- [ ] finalize project license
+- [x] finalize project license
 - [ ] prepare tagged portfolio release
 
 ## Development
 
-The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface and a curated `CHANGELOG.md` for v0.1.0 and v0.2.0. Package metadata now reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is license selection and tagged-release preparation.
+The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, a curated `CHANGELOG.md` for v0.1.0 and v0.2.0, and an explicit MIT license reflected in package metadata. Package metadata reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is final tagged-release preparation.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and safety-relevant changes.
 
 ## License
 
-A project license will be finalized before the first stable release.
+NetScope is released under the [MIT License](LICENSE).
