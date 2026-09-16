@@ -47,6 +47,43 @@ def test_csv_report_preserves_summary_errors_and_latency():
     assert row["errors"] == '["connection refused, retry later"]'
 
 
+@pytest.mark.parametrize("hostname", ["=1+1", "+cmd", "-formula", "@SUM(A1:A2)"])
+def test_csv_report_neutralizes_formula_like_text(hostname):
+    row = _read(to_csv(DNSResult(hostname, (), False, "resolution failed")))
+
+    assert row["hostname"] == "'" + hostname
+
+
+@pytest.mark.parametrize("hostname", [" =1+1", "\t+cmd", "\r-formula", "\n@SUM(A1:A2)"])
+def test_csv_report_neutralizes_formula_like_text_after_whitespace(hostname):
+    row = _read(to_csv(DNSResult(hostname, (), False, "resolution failed")))
+
+    assert row["hostname"] == "'" + hostname
+
+
+def test_csv_report_does_not_modify_safe_text_or_numeric_values():
+    result = TCPSummaryResult(
+        host="example.test",
+        port=443,
+        attempts=1,
+        successes=0,
+        failures=1,
+        success_rate_percent=0.0,
+        min_latency_ms=0.0,
+        avg_latency_ms=0.0,
+        max_latency_ms=0.0,
+        jitter_ms=0.0,
+        ok=False,
+        errors=("connection refused",),
+    )
+
+    row = _read(to_csv(result))
+
+    assert row["host"] == "example.test"
+    assert row["port"] == "443"
+    assert row["failures"] == "1"
+
+
 def test_cli_rejects_multiple_structured_output_formats():
     parser = build_parser()
     with pytest.raises(SystemExit) as exc:
