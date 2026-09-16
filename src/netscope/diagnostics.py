@@ -112,9 +112,11 @@ def resolve_hostname(hostname: str) -> DNSResult:
 def inspect_interfaces() -> InterfaceResult:
     """Inspect local network identity without sending network traffic."""
     try:
-        hostname = socket.gethostname()
+        hostname = socket.gethostname().strip()
     except OSError as exc:
         return InterfaceResult("", (), (), False, str(exc))
+    if not hostname:
+        return InterfaceResult("", (), (), False, "local hostname is unavailable")
 
     interface_warning: str | None = None
     try:

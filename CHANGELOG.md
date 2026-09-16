@@ -12,6 +12,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 - TCP summaries now report success rate and latency jitter (population standard deviation) in human, JSON, and CSV output for clearer intermittent-connectivity diagnostics.
 
 ### Fixed
+- Local interface diagnostics now reject a blank OS hostname before interface enumeration or resolver lookup, returning a structured failure instead of attempting ambiguous local-name resolution.
 - Local interface diagnostics now normalize hostname lookup failures and treat an empty local-host address resolution as a structured failure instead of reporting misleading success with no addresses.
 - DNS diagnostics now treat an empty resolver response as a failed lookup instead of reporting a misleading success with no addresses, and normalize broader OS-level resolver failures into structured diagnostic results.
 - TCP summaries now validate the host, port, timeout, and bounded attempt count before any connection attempt, so invalid requests report zero attempts instead of repeating the same configuration error as failed network probes.
