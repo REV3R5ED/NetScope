@@ -14,6 +14,9 @@ All notable changes to NetScope are documented here. The project follows semanti
 ### Fixed
 - TCP summaries now validate the host, port, timeout, and bounded attempt count before any connection attempt, so invalid requests report zero attempts instead of repeating the same configuration error as failed network probes.
 
+### Security
+- CSV exports now neutralize text fields that could be interpreted as spreadsheet formulas, including formula prefixes hidden behind leading spaces or control whitespace, while leaving numeric diagnostic values unchanged.
+
 ## [0.2.0] - 2026-09-15
 
 ### Added
