@@ -29,7 +29,6 @@ def _result_dict(result: object) -> dict[str, object]:
 
 @dataclass(frozen=True)
 class DNSResult:
-    """Normalized DNS lookup result suitable for CLI or JSON output."""
     hostname: str
     addresses: tuple[str, ...]
     ok: bool
@@ -41,7 +40,6 @@ class DNSResult:
 
 @dataclass(frozen=True)
 class TCPResult:
-    """Result of one explicitly requested TCP connection attempt."""
     host: str
     port: int
     ok: bool
@@ -54,7 +52,6 @@ class TCPResult:
 
 @dataclass(frozen=True)
 class TCPSummaryResult:
-    """Bounded latency and reliability summary for one explicit endpoint."""
     host: str
     port: int
     attempts: int
@@ -74,7 +71,6 @@ class TCPSummaryResult:
 
 @dataclass(frozen=True)
 class InterfaceResult:
-    """Read-only summary of interfaces and addresses visible to the OS."""
     hostname: str
     interfaces: tuple[str, ...]
     addresses: tuple[str, ...]
@@ -87,7 +83,6 @@ class InterfaceResult:
 
 @dataclass(frozen=True)
 class PathResult:
-    """Bounded route/path diagnostic produced by the OS traceroute utility."""
     host: str
     max_hops: int
     hops: tuple[str, ...]
@@ -116,7 +111,11 @@ def resolve_hostname(hostname: str) -> DNSResult:
 
 def inspect_interfaces() -> InterfaceResult:
     """Inspect local network identity without sending network traffic."""
-    hostname = socket.gethostname()
+    try:
+        hostname = socket.gethostname()
+    except OSError as exc:
+        return InterfaceResult("", (), (), False, str(exc))
+
     interface_warning: str | None = None
     try:
         interfaces = tuple(sorted({name for _, name in socket.if_nameindex()}))
@@ -130,6 +129,8 @@ def inspect_interfaces() -> InterfaceResult:
         addresses = tuple(sorted({record[4][0] for record in records}))
     except OSError as exc:
         return InterfaceResult(hostname, interfaces, (), False, str(exc))
+    if not addresses:
+        return InterfaceResult(hostname, interfaces, (), False, "local hostname resolved to no addresses")
     return InterfaceResult(hostname, interfaces, addresses, True, interface_warning)
 
 
@@ -178,13 +179,7 @@ def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) ->
 
 
 def trace_path(host: str, max_hops: int = 15, timeout: float = 2.0) -> PathResult:
-    """Run one bounded OS route trace to an explicit destination.
-
-    NetScope never expands targets. Numeric output is requested to avoid extra
-    reverse-DNS traffic, arguments are passed without a shell, and hop/time limits
-    are capped. The raw per-hop lines are preserved because traceroute formatting
-    differs across operating systems.
-    """
+    """Run one bounded OS route trace to an explicit destination."""
     target = host.strip()
     if not target:
         return PathResult(host, max_hops, (), False, False, "host is required")
