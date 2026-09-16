@@ -45,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
     path.add_argument("host")
     path.add_argument("--max-hops", type=int, default=15, help="Maximum hops (1-30, default 15)")
     path.add_argument("--timeout", type=float, default=2.0, help="Per-hop wait in seconds (max 10)")
+    path.add_argument(
+        "--require-reached",
+        action="store_true",
+        help="Return exit code 1 unless the bounded trace reaches the destination",
+    )
     _add_output_options(path)
     return parser
 
@@ -105,7 +110,11 @@ def main(argv: list[str] | None = None) -> int:
                 print(hop)
             if result.error:
                 print(f"Note: {result.error}")
-        return 0 if result.ok else 1
+        if not result.ok:
+            return 1
+        if args.require_reached and not result.reached:
+            return 1
+        return 0
     return 2
 
 
