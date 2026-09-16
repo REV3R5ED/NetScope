@@ -1,6 +1,56 @@
 import socket
 
-from netscope.diagnostics import check_tcp, summarize_tcp, trace_path
+from netscope.diagnostics import check_tcp, resolve_hostname, summarize_tcp, trace_path
+
+
+def test_dns_rejects_non_string_hostname_without_resolver(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("resolver should not be touched")
+
+    monkeypatch.setattr(socket, "getaddrinfo", unexpected)
+    for hostname in (None, 123, True, object()):
+        result = resolve_hostname(hostname)
+        assert result.ok is False
+        assert result.hostname == ""
+        assert result.error == "hostname must be a string"
+
+
+def test_tcp_rejects_non_string_host_without_network(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("network should not be touched")
+
+    monkeypatch.setattr(socket, "create_connection", unexpected)
+    for host in (None, 123, True, object()):
+        result = check_tcp(host, 443)
+        assert result.ok is False
+        assert result.host == ""
+        assert result.error == "host must be a string"
+
+
+def test_summary_rejects_non_string_host_without_attempts(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("connection attempts should not run")
+
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", unexpected)
+    for host in (None, 123, True, object()):
+        result = summarize_tcp(host, 443)
+        assert result.ok is False
+        assert result.attempts == 0
+        assert result.host == ""
+        assert result.errors == ("host must be a string",)
+
+
+def test_path_rejects_non_string_host_before_subprocess(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("subprocess should not run")
+
+    monkeypatch.setattr("netscope.diagnostics.subprocess.run", unexpected)
+    for host in (None, 123, True, object()):
+        result = trace_path(host)
+        assert result.ok is False
+        assert result.host == ""
+        assert result.hops == ()
+        assert result.error == "host must be a string"
 
 
 def test_tcp_rejects_non_integer_ports_without_network(monkeypatch):

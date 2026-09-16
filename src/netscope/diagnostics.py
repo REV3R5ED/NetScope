@@ -27,6 +27,11 @@ def _result_dict(result: object) -> dict[str, object]:
     return normalized
 
 
+def _normalized_host(host: object) -> str | None:
+    """Return a trimmed host string, rejecting non-string API input."""
+    return host.strip() if isinstance(host, str) else None
+
+
 def _valid_port(port: object) -> bool:
     return isinstance(port, int) and not isinstance(port, bool) and 1 <= port <= 65535
 
@@ -90,7 +95,9 @@ class PathResult:
 
 def resolve_hostname(hostname: str) -> DNSResult:
     """Resolve a hostname using the OS resolver without scanning or probing hosts."""
-    target = hostname.strip()
+    target = _normalized_host(hostname)
+    if target is None:
+        return DNSResult(hostname="", addresses=(), ok=False, error="hostname must be a string")
     if not target:
         return DNSResult(hostname=hostname, addresses=(), ok=False, error="hostname is required")
     try:
@@ -131,7 +138,9 @@ def inspect_interfaces() -> InterfaceResult:
 
 def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
     """Attempt one bounded TCP connection to an explicit host and port."""
-    target = host.strip()
+    target = _normalized_host(host)
+    if target is None:
+        return TCPResult(host="", port=port, ok=False, error="host must be a string")
     if not target:
         return TCPResult(host=host, port=port, ok=False, error="host is required")
     if not _valid_port(port):
@@ -149,9 +158,12 @@ def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
 
 def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) -> TCPSummaryResult:
     """Summarize up to ten connection attempts to one explicit endpoint."""
-    target = host.strip()
+    target = _normalized_host(host)
     validation_error: str | None = None
-    if not target:
+    if target is None:
+        target = ""
+        validation_error = "host must be a string"
+    elif not target:
         validation_error = "host is required"
     elif not _valid_port(port):
         validation_error = "port must be between 1 and 65535"
@@ -174,7 +186,9 @@ def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) ->
 
 def trace_path(host: str, max_hops: int = 15, timeout: float = 2.0) -> PathResult:
     """Run one bounded OS route trace to an explicit destination."""
-    target = host.strip()
+    target = _normalized_host(host)
+    if target is None:
+        return PathResult("", max_hops, (), False, False, "host must be a string")
     if not target:
         return PathResult(host, max_hops, (), False, False, "host is required")
     if target.startswith("-"):
