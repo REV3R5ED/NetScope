@@ -62,6 +62,30 @@ def test_tcp_summary_require_all_succeeds_when_every_attempt_succeeds(monkeypatc
     assert cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 0
 
 
+def test_tcp_summary_min_success_rate_fails_below_threshold(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
+    assert cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", "80", "--json"]) == 1
+    assert json.loads(capsys.readouterr().out)["success_rate_percent"] == 66.67
+
+
+def test_tcp_summary_min_success_rate_succeeds_at_threshold(monkeypatch):
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
+    assert cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", "66.67", "--json"]) == 0
+
+
+@pytest.mark.parametrize("value", ["-1", "100.1"])
+def test_tcp_summary_min_success_rate_rejects_out_of_range(value):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", value])
+    assert exc.value.code == 2
+
+
+def test_tcp_summary_health_gates_are_mutually_exclusive():
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["tcp-summary", "example.com", "443", "--require-all", "--min-success-rate", "90"])
+    assert exc.value.code == 2
+
+
 def test_path_json_output(monkeypatch, capsys):
     result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms",), False, True, "destination not reached")
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)

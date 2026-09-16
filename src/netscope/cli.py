@@ -16,6 +16,13 @@ def _add_output_options(parser: argparse.ArgumentParser) -> None:
     output.add_argument("--csv", action="store_true", dest="as_csv", help="Emit a one-record CSV report")
 
 
+def _success_rate(value: str) -> float:
+    rate = float(value)
+    if not 0.0 <= rate <= 100.0:
+        raise argparse.ArgumentTypeError("must be between 0 and 100")
+    return rate
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Defensive network visibility and diagnostics")
     parser.add_argument("--version", action="version", version=f"NetScope {__version__}")
@@ -35,7 +42,9 @@ def build_parser() -> argparse.ArgumentParser:
     summary.add_argument("port", type=int)
     summary.add_argument("--count", type=int, default=3, help="Connection attempts (1-10, default 3)")
     summary.add_argument("--timeout", type=float, default=3.0, help="Per-attempt timeout in seconds (max 30)")
-    summary.add_argument("--require-all", action="store_true", help="Return exit code 1 if any bounded connection attempt fails")
+    gates = summary.add_mutually_exclusive_group()
+    gates.add_argument("--require-all", action="store_true", help="Return exit code 1 if any bounded connection attempt fails")
+    gates.add_argument("--min-success-rate", type=_success_rate, metavar="PERCENT", help="Return exit code 1 when success rate is below PERCENT (0-100)")
     _add_output_options(summary)
     path = subparsers.add_parser("path", help="Trace a bounded network path to one explicit host")
     path.add_argument("host")
@@ -92,6 +101,8 @@ def main(argv: list[str] | None = None) -> int:
         if not result.ok:
             return 1
         if args.require_all and result.failures:
+            return 1
+        if args.min_success_rate is not None and result.success_rate_percent < args.min_success_rate:
             return 1
         return 0
     if args.command == "path":
