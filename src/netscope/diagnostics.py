@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import math
 import platform
 import shutil
 import socket
@@ -137,8 +138,8 @@ def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
         return TCPResult(host=host, port=port, ok=False, error="host is required")
     if not 1 <= port <= 65535:
         return TCPResult(host=target, port=port, ok=False, error="port must be between 1 and 65535")
-    if timeout <= 0 or timeout > 30:
-        return TCPResult(host=target, port=port, ok=False, error="timeout must be greater than 0 and at most 30 seconds")
+    if not math.isfinite(timeout) or timeout <= 0 or timeout > 30:
+        return TCPResult(host=target, port=port, ok=False, error="timeout must be finite, greater than 0, and at most 30 seconds")
     started = time.monotonic()
     try:
         with socket.create_connection((target, port), timeout=timeout):
@@ -156,8 +157,8 @@ def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) ->
         validation_error = "host is required"
     elif not 1 <= port <= 65535:
         validation_error = "port must be between 1 and 65535"
-    elif timeout <= 0 or timeout > 30:
-        validation_error = "timeout must be greater than 0 and at most 30 seconds"
+    elif not math.isfinite(timeout) or timeout <= 0 or timeout > 30:
+        validation_error = "timeout must be finite, greater than 0, and at most 30 seconds"
     elif not 1 <= count <= 10:
         validation_error = "count must be between 1 and 10"
     if validation_error:
@@ -189,8 +190,8 @@ def trace_path(host: str, max_hops: int = 15, timeout: float = 2.0) -> PathResul
         return PathResult(target, max_hops, (), False, False, "host must not begin with '-'")
     if not 1 <= max_hops <= 30:
         return PathResult(target, max_hops, (), False, False, "max hops must be between 1 and 30")
-    if timeout <= 0 or timeout > 10:
-        return PathResult(target, max_hops, (), False, False, "timeout must be greater than 0 and at most 10 seconds")
+    if not math.isfinite(timeout) or timeout <= 0 or timeout > 10:
+        return PathResult(target, max_hops, (), False, False, "timeout must be finite, greater than 0, and at most 10 seconds")
 
     is_windows = platform.system().lower() == "windows"
     executable = "tracert" if is_windows else "traceroute"
