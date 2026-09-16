@@ -146,6 +146,26 @@ def test_summarize_tcp_rejects_unbounded_count(monkeypatch):
     assert result.errors == ("count must be between 1 and 10",)
 
 
+def test_summarize_tcp_rejects_invalid_endpoint_without_attempts(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("network should not be touched")
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", unexpected)
+
+    blank_host = summarize_tcp("   ", 443, count=3)
+    invalid_port = summarize_tcp("example.test", 70000, count=3)
+    invalid_timeout = summarize_tcp("example.test", 443, count=3, timeout=31)
+
+    assert blank_host.attempts == 0
+    assert blank_host.failures == 0
+    assert blank_host.errors == ("host is required",)
+    assert invalid_port.attempts == 0
+    assert invalid_port.failures == 0
+    assert invalid_port.errors == ("port must be between 1 and 65535",)
+    assert invalid_timeout.attempts == 0
+    assert invalid_timeout.failures == 0
+    assert invalid_timeout.errors == ("timeout must be greater than 0 and at most 30 seconds",)
+
+
 def test_summarize_tcp_reports_all_failures(monkeypatch):
     failure = type("R", (), {"ok": False, "latency_ms": None, "error": "timed out"})()
     monkeypatch.setattr("netscope.diagnostics.check_tcp", lambda *args, **kwargs: failure)
