@@ -35,6 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
     summary.add_argument("port", type=int)
     summary.add_argument("--count", type=int, default=3, help="Connection attempts (1-10, default 3)")
     summary.add_argument("--timeout", type=float, default=3.0, help="Per-attempt timeout in seconds (max 30)")
+    summary.add_argument(
+        "--require-all",
+        action="store_true",
+        help="Return exit code 1 if any bounded connection attempt fails",
+    )
     _add_output_options(summary)
     path = subparsers.add_parser("path", help="Trace a bounded network path to one explicit host")
     path.add_argument("host")
@@ -87,7 +92,11 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 detail = result.errors[0] if result.errors else "no successful connections"
                 print(f"{result.host}:{result.port}: summary failed: {detail}")
-        return 0 if result.ok else 1
+        if not result.ok:
+            return 1
+        if args.require_all and result.failures:
+            return 1
+        return 0
     if args.command == "path":
         result = trace_path(args.host, args.max_hops, args.timeout)
         if not _emit_structured(result, args):
