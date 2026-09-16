@@ -103,7 +103,17 @@ def test_check_tcp_validates_port_without_connecting(monkeypatch):
 def test_check_tcp_caps_timeout():
     result = check_tcp("example.test", 443, timeout=31)
     assert result.ok is False
-    assert result.error == "timeout must be greater than 0 and at most 30 seconds"
+    assert result.error == "timeout must be finite, greater than 0, and at most 30 seconds"
+
+
+def test_check_tcp_rejects_nonfinite_timeout_without_connecting(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("network should not be touched")
+    monkeypatch.setattr(socket, "create_connection", unexpected)
+    for timeout in (float("nan"), float("inf"), float("-inf")):
+        result = check_tcp("example.test", 443, timeout=timeout)
+        assert result.ok is False
+        assert result.error == "timeout must be finite, greater than 0, and at most 30 seconds"
 
 
 def test_summarize_tcp_calculates_latency_and_failures(monkeypatch):
@@ -163,7 +173,19 @@ def test_summarize_tcp_rejects_invalid_endpoint_without_attempts(monkeypatch):
     assert invalid_port.errors == ("port must be between 1 and 65535",)
     assert invalid_timeout.attempts == 0
     assert invalid_timeout.failures == 0
-    assert invalid_timeout.errors == ("timeout must be greater than 0 and at most 30 seconds",)
+    assert invalid_timeout.errors == ("timeout must be finite, greater than 0, and at most 30 seconds",)
+
+
+def test_summarize_tcp_rejects_nonfinite_timeout_without_attempts(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("network should not be touched")
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", unexpected)
+    for timeout in (float("nan"), float("inf"), float("-inf")):
+        result = summarize_tcp("example.test", 443, count=3, timeout=timeout)
+        assert result.ok is False
+        assert result.attempts == 0
+        assert result.failures == 0
+        assert result.errors == ("timeout must be finite, greater than 0, and at most 30 seconds",)
 
 
 def test_summarize_tcp_reports_all_failures(monkeypatch):
