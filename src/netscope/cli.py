@@ -35,21 +35,13 @@ def build_parser() -> argparse.ArgumentParser:
     summary.add_argument("port", type=int)
     summary.add_argument("--count", type=int, default=3, help="Connection attempts (1-10, default 3)")
     summary.add_argument("--timeout", type=float, default=3.0, help="Per-attempt timeout in seconds (max 30)")
-    summary.add_argument(
-        "--require-all",
-        action="store_true",
-        help="Return exit code 1 if any bounded connection attempt fails",
-    )
+    summary.add_argument("--require-all", action="store_true", help="Return exit code 1 if any bounded connection attempt fails")
     _add_output_options(summary)
     path = subparsers.add_parser("path", help="Trace a bounded network path to one explicit host")
     path.add_argument("host")
     path.add_argument("--max-hops", type=int, default=15, help="Maximum hops (1-30, default 15)")
     path.add_argument("--timeout", type=float, default=2.0, help="Per-hop wait in seconds (max 10)")
-    path.add_argument(
-        "--require-reached",
-        action="store_true",
-        help="Return exit code 1 unless the bounded trace reaches the destination",
-    )
+    path.add_argument("--require-reached", action="store_true", help="Return exit code 1 unless the bounded trace reaches the destination")
     _add_output_options(path)
     return parser
 
@@ -90,8 +82,8 @@ def main(argv: list[str] | None = None) -> int:
         result = summarize_tcp(args.host, args.port, args.count, args.timeout)
         if not _emit_structured(result, args):
             if result.ok:
-                print(f"{result.host}:{result.port}: {result.successes}/{result.attempts} successful")
-                print(f"Latency ms: min {result.min_latency_ms:.2f}, avg {result.avg_latency_ms:.2f}, max {result.max_latency_ms:.2f}")
+                print(f"{result.host}:{result.port}: {result.successes}/{result.attempts} successful ({result.success_rate_percent:.2f}%)")
+                print(f"Latency ms: min {result.min_latency_ms:.2f}, avg {result.avg_latency_ms:.2f}, max {result.max_latency_ms:.2f}, jitter {result.jitter_ms:.2f}")
                 if result.failures:
                     print(f"Failures: {result.failures}")
             else:
