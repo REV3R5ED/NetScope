@@ -10,11 +10,25 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "REV3R5ED"}]
+keywords = ["networking", "diagnostics", "network-visibility", "defensive-security", "cli"]
 classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Information Technology",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
   "Topic :: System :: Networking",
+  "Topic :: System :: Systems Administration",
 ]
+
+[project.urls]
+Repository = "https://github.com/REV3R5ED/NetScope"
+Issues = "https://github.com/REV3R5ED/NetScope/issues"
+Changelog = "https://github.com/REV3R5ED/NetScope/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
