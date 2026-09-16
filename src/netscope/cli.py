@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 
 from . import __version__
 from .diagnostics import check_tcp, inspect_interfaces, resolve_hostname, summarize_tcp, trace_path
@@ -18,15 +19,15 @@ def _add_output_options(parser: argparse.ArgumentParser) -> None:
 
 def _success_rate(value: str) -> float:
     rate = float(value)
-    if not 0.0 <= rate <= 100.0:
-        raise argparse.ArgumentTypeError("must be between 0 and 100")
+    if not math.isfinite(rate) or not 0.0 <= rate <= 100.0:
+        raise argparse.ArgumentTypeError("must be a finite value between 0 and 100")
     return rate
 
 
 def _nonnegative_float(value: str) -> float:
     number = float(value)
-    if number < 0.0:
-        raise argparse.ArgumentTypeError("must be zero or greater")
+    if not math.isfinite(number) or number < 0.0:
+        raise argparse.ArgumentTypeError("must be a finite value of zero or greater")
     return number
 
 
