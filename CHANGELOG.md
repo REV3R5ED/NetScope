@@ -7,6 +7,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 ### Added
 - `tcp-summary --require-all` for CI and monitoring health gates that should fail when any bounded connection attempt fails while still emitting the complete human, JSON, or CSV report.
 - `tcp-summary --min-success-rate PERCENT` for bounded availability gates that tolerate a controlled amount of intermittent failure while returning non-zero when the measured success rate falls below an explicit 0–100 threshold.
+- `tcp-summary --max-jitter-ms MS` for bounded latency-stability gates that return non-zero when measured jitter exceeds an explicit non-negative threshold; it can be combined with the success-rate gate.
 - `path --require-reached` for automation workflows that need a non-zero exit status when a bounded route trace completes but does not reach its explicit destination; partial diagnostic output is still preserved.
 - TCP summaries now report success rate and latency jitter (population standard deviation) in human, JSON, and CSV output for clearer intermittent-connectivity diagnostics.
 
