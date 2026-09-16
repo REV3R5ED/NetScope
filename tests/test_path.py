@@ -51,7 +51,16 @@ def test_trace_path_rejects_unsafe_or_unbounded_input_without_running(monkeypatc
     monkeypatch.setattr("netscope.diagnostics.subprocess.run", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not run")))
     assert trace_path("-bad", 5).error == "host must not begin with '-'"
     assert trace_path("example.test", 31).error == "max hops must be between 1 and 30"
-    assert trace_path("example.test", 5, 11).error == "timeout must be greater than 0 and at most 10 seconds"
+    assert trace_path("example.test", 5, 11).error == "timeout must be finite, greater than 0, and at most 10 seconds"
+
+
+def test_trace_path_rejects_nonfinite_timeout_without_running(monkeypatch):
+    monkeypatch.setattr("netscope.diagnostics.subprocess.run", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not run")))
+    for timeout in (float("nan"), float("inf"), float("-inf")):
+        result = trace_path("example.test", 5, timeout)
+        assert result.ok is False
+        assert result.hops == ()
+        assert result.error == "timeout must be finite, greater than 0, and at most 10 seconds"
 
 
 def test_trace_path_reports_missing_platform_utility(monkeypatch):
