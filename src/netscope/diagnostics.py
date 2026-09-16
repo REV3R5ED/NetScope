@@ -32,6 +32,11 @@ def _normalized_host(host: object) -> str | None:
     return host.strip() if isinstance(host, str) else None
 
 
+def _has_control_characters(value: str) -> bool:
+    """Reject control characters that can corrupt reports or tool arguments."""
+    return any(ord(character) < 32 or ord(character) == 127 for character in value)
+
+
 def _valid_port(port: object) -> bool:
     return isinstance(port, int) and not isinstance(port, bool) and 1 <= port <= 65535
 
@@ -100,6 +105,8 @@ def resolve_hostname(hostname: str) -> DNSResult:
         return DNSResult(hostname="", addresses=(), ok=False, error="hostname must be a string")
     if not target:
         return DNSResult(hostname=hostname, addresses=(), ok=False, error="hostname is required")
+    if _has_control_characters(target):
+        return DNSResult(hostname=target, addresses=(), ok=False, error="hostname must not contain control characters")
     try:
         records = socket.getaddrinfo(target, None, type=socket.SOCK_STREAM)
     except OSError as exc:
@@ -143,6 +150,8 @@ def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
         return TCPResult(host="", port=port, ok=False, error="host must be a string")
     if not target:
         return TCPResult(host=host, port=port, ok=False, error="host is required")
+    if _has_control_characters(target):
+        return TCPResult(host=target, port=port, ok=False, error="host must not contain control characters")
     if not _valid_port(port):
         return TCPResult(host=target, port=port, ok=False, error="port must be between 1 and 65535")
     if not _valid_timeout(timeout, 30):
@@ -165,6 +174,8 @@ def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) ->
         validation_error = "host must be a string"
     elif not target:
         validation_error = "host is required"
+    elif _has_control_characters(target):
+        validation_error = "host must not contain control characters"
     elif not _valid_port(port):
         validation_error = "port must be between 1 and 65535"
     elif not _valid_timeout(timeout, 30):
@@ -191,6 +202,8 @@ def trace_path(host: str, max_hops: int = 15, timeout: float = 2.0) -> PathResul
         return PathResult("", max_hops, (), False, False, "host must be a string")
     if not target:
         return PathResult(host, max_hops, (), False, False, "host is required")
+    if _has_control_characters(target):
+        return PathResult(target, max_hops, (), False, False, "host must not contain control characters")
     if target.startswith("-"):
         return PathResult(target, max_hops, (), False, False, "host must not begin with '-'")
     if not isinstance(max_hops, int) or isinstance(max_hops, bool) or not 1 <= max_hops <= 30:

@@ -53,6 +53,33 @@ def test_path_rejects_non_string_host_before_subprocess(monkeypatch):
         assert result.error == "host must be a string"
 
 
+def test_host_controls_are_rejected_before_external_activity(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError("external activity should not run")
+
+    monkeypatch.setattr(socket, "getaddrinfo", unexpected)
+    monkeypatch.setattr(socket, "create_connection", unexpected)
+    monkeypatch.setattr("netscope.diagnostics.check_tcp", unexpected)
+    monkeypatch.setattr("netscope.diagnostics.subprocess.run", unexpected)
+
+    for host in ("example.test\nforged", "example.test\x00suffix", "example.test\x7f"):
+        dns = resolve_hostname(host)
+        tcp = check_tcp(host, 443)
+        summary = summarize_tcp(host, 443)
+        path = trace_path(host)
+
+        assert dns.ok is False
+        assert dns.error == "hostname must not contain control characters"
+        assert tcp.ok is False
+        assert tcp.error == "host must not contain control characters"
+        assert summary.ok is False
+        assert summary.attempts == 0
+        assert summary.errors == ("host must not contain control characters",)
+        assert path.ok is False
+        assert path.hops == ()
+        assert path.error == "host must not contain control characters"
+
+
 def test_tcp_rejects_non_integer_ports_without_network(monkeypatch):
     def unexpected(*args, **kwargs):
         raise AssertionError("network should not be touched")

@@ -19,6 +19,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 - TCP and path diagnostics now reject non-finite timeout values such as `NaN` and infinity before any socket connection or traceroute subprocess can run, keeping runtime limits explicit and preventing malformed numeric input from escaping bounded validation.
 
 ### Security
+- Diagnostic host inputs now reject ASCII control characters before resolver, socket, or traceroute activity, preventing malformed host values from corrupting terminal/report output or being forwarded to platform networking tools.
 - CSV exports now neutralize text fields that could be interpreted as spreadsheet formulas, including formula prefixes hidden behind leading spaces or control whitespace, while leaving numeric diagnostic values unchanged.
 
 ### Release hardening
