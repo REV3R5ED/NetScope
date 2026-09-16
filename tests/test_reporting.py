@@ -30,16 +30,20 @@ def test_csv_report_preserves_summary_errors_and_latency():
         attempts=3,
         successes=2,
         failures=1,
+        success_rate_percent=66.67,
         min_latency_ms=10.0,
         avg_latency_ms=15.0,
         max_latency_ms=20.0,
+        jitter_ms=5.0,
         ok=True,
         errors=("connection refused, retry later",),
     )
 
     row = _read(to_csv(result))
 
+    assert row["success_rate_percent"] == "66.67"
     assert row["avg_latency_ms"] == "15.0"
+    assert row["jitter_ms"] == "5.0"
     assert row["errors"] == '["connection refused, retry later"]'
 
 
