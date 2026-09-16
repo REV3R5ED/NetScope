@@ -2,6 +2,11 @@
 
 All notable changes to NetScope are documented here. The project follows semantic versioning for portfolio releases.
 
+## [Unreleased]
+
+### Added
+- `tcp-summary --require-all` for CI and monitoring health gates that should fail when any bounded connection attempt fails while still emitting the complete human, JSON, or CSV report.
+
 ## [0.2.0] - 2026-09-15
 
 ### Added
