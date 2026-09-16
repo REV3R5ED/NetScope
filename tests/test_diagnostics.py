@@ -16,6 +16,7 @@ def test_resolve_hostname_deduplicates_and_sorts(monkeypatch):
     assert result.ok is True
     assert result.addresses == ("192.0.2.1", "192.0.2.2")
     assert result.error is None
+    assert result.to_dict()["addresses"] == ["192.0.2.1", "192.0.2.2"]
 
 
 def test_resolve_hostname_rejects_blank_input():
@@ -53,6 +54,8 @@ def test_inspect_interfaces_normalizes_and_sorts(monkeypatch):
     assert result.interfaces == ("eth0", "lo")
     assert result.addresses == ("192.0.2.20", "2001:db8::20")
     assert result.error is None
+    assert result.to_dict()["interfaces"] == ["eth0", "lo"]
+    assert result.to_dict()["addresses"] == ["192.0.2.20", "2001:db8::20"]
 
 
 def test_inspect_interfaces_normalizes_os_error(monkeypatch):
@@ -140,6 +143,7 @@ def test_summarize_tcp_calculates_latency_and_failures(monkeypatch):
     assert result.avg_latency_ms == 15.0
     assert result.max_latency_ms == 20.0
     assert result.errors == ("refused",)
+    assert result.to_dict()["errors"] == ["refused"]
 
 
 def test_summarize_tcp_rejects_unbounded_count(monkeypatch):
