@@ -32,6 +32,7 @@ netscope tcp example.com 443 --timeout 2 --json
 netscope tcp-summary example.com 443 --count 5
 netscope tcp-summary example.com 443 --count 5 --csv
 netscope tcp-summary example.com 443 --count 5 --require-all --json
+netscope tcp-summary example.com 443 --count 5 --min-success-rate 80 --max-jitter-ms 25 --json
 netscope path example.com --max-hops 12
 netscope path example.com --max-hops 12 --json
 pytest -q
@@ -41,7 +42,7 @@ pytest -q
 
 DNS diagnostics use the operating system resolver and provide deterministic normalized results. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured reporting workflow.
 
-`netscope tcp-summary` repeats that same single-endpoint diagnostic a small, explicitly bounded number of times (default 3, maximum 10). It reports successful and failed attempts plus minimum, average, and maximum connection latency. By default a partial success remains a successful summary so operators can inspect intermittent connectivity. Add `--require-all` when using NetScope as a CI or monitoring health gate: the full report is still emitted, but the command returns exit code 1 if any attempt fails.
+`netscope tcp-summary` repeats that same single-endpoint diagnostic a small, explicitly bounded number of times (default 3, maximum 10). It reports successful and failed attempts plus minimum, average, maximum, and jitter latency metrics. By default a partial success remains a successful summary so operators can inspect intermittent connectivity. For CI or monitoring, `--require-all` fails if any attempt fails, while `--min-success-rate PERCENT` allows an explicit availability tolerance. `--max-jitter-ms MS` adds an independent latency-stability threshold and can be combined with the success-rate gate. These health gates still emit the complete report before returning exit code 1 when a threshold is violated.
 
 ### Route/path diagnostics
 
@@ -78,11 +79,12 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] finalize project license
 - [x] validate built release artifacts in CI
 - [x] add strict health-gate behavior for bounded TCP summaries
+- [x] add configurable availability and jitter health gates
 - [ ] prepare tagged portfolio release
 
 ## Development
 
-The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, a curated `CHANGELOG.md` for v0.1.0 and v0.2.0, an explicit MIT license reflected in package metadata, CI validation of the actual source distribution and wheel before release, and an opt-in strict TCP-summary health gate for automation workflows. The artifact job builds distributions, installs the generated wheel, and smoke-tests the installed CLI with a local-only DNS diagnostic. Package metadata reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is final tagged-release preparation after the latest pipeline is green.
+The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, a curated `CHANGELOG.md` for v0.1.0 and v0.2.0, an explicit MIT license reflected in package metadata, CI validation of the actual source distribution and wheel before release, and opt-in TCP-summary health gates for availability and latency stability. The artifact job builds distributions, installs the generated wheel, and smoke-tests the installed CLI with a local-only DNS diagnostic. Package metadata reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is final tagged-release preparation after the latest pipeline is green.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and safety-relevant changes.
 
