@@ -12,6 +12,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 - TCP summaries now report success rate and latency jitter (population standard deviation) in human, JSON, and CSV output for clearer intermittent-connectivity diagnostics.
 
 ### Fixed
+- DNS diagnostics now treat an empty resolver response as a failed lookup instead of reporting a misleading success with no addresses, and normalize broader OS-level resolver failures into structured diagnostic results.
 - TCP summaries now validate the host, port, timeout, and bounded attempt count before any connection attempt, so invalid requests report zero attempts instead of repeating the same configuration error as failed network probes.
 - TCP and path diagnostics now reject non-finite timeout values such as `NaN` and infinity before any socket connection or traceroute subprocess can run, keeping runtime limits explicit and preventing malformed numeric input from escaping bounded validation.
 

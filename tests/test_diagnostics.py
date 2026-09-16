@@ -32,6 +32,24 @@ def test_resolve_hostname_normalizes_resolver_error(monkeypatch):
     assert result.error == "not found"
 
 
+def test_resolve_hostname_normalizes_generic_os_resolver_error(monkeypatch):
+    def fail(*args, **kwargs):
+        raise OSError("resolver unavailable")
+    monkeypatch.setattr(socket, "getaddrinfo", fail)
+    result = resolve_hostname("example.test")
+    assert result.ok is False
+    assert result.addresses == ()
+    assert result.error == "resolver unavailable"
+
+
+def test_resolve_hostname_rejects_empty_resolver_result(monkeypatch):
+    monkeypatch.setattr(socket, "getaddrinfo", lambda *args, **kwargs: [])
+    result = resolve_hostname("example.test")
+    assert result.ok is False
+    assert result.addresses == ()
+    assert result.error == "resolver returned no addresses"
+
+
 def test_inspect_interfaces_normalizes_and_sorts(monkeypatch):
     monkeypatch.setattr(socket, "gethostname", lambda: "workstation")
     monkeypatch.setattr(socket, "if_nameindex", lambda: [(2, "eth0"), (1, "lo"), (3, "eth0")])

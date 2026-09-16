@@ -106,9 +106,11 @@ def resolve_hostname(hostname: str) -> DNSResult:
         return DNSResult(hostname=hostname, addresses=(), ok=False, error="hostname is required")
     try:
         records = socket.getaddrinfo(target, None, type=socket.SOCK_STREAM)
-    except socket.gaierror as exc:
+    except OSError as exc:
         return DNSResult(hostname=target, addresses=(), ok=False, error=str(exc))
     addresses = tuple(sorted({record[4][0] for record in records}))
+    if not addresses:
+        return DNSResult(hostname=target, addresses=(), ok=False, error="resolver returned no addresses")
     return DNSResult(hostname=target, addresses=addresses, ok=True)
 
 
