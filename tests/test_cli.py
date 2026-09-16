@@ -16,7 +16,10 @@ def test_interfaces_json_output(monkeypatch, capsys):
 
     assert cli.main(["interfaces", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload == result.to_dict()
+    # JSON arrays deserialize as lists even when the internal immutable model
+    # intentionally stores these collections as tuples.
+    expected = json.loads(json.dumps(result.to_dict()))
+    assert payload == expected
 
 
 def test_dns_csv_output(monkeypatch, capsys):
