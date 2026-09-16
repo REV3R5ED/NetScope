@@ -75,11 +75,12 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] expand CLI integration tests
 - [x] add changelog and release notes
 - [x] finalize project license
+- [x] validate built release artifacts in CI
 - [ ] prepare tagged portfolio release
 
 ## Development
 
-The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, a curated `CHANGELOG.md` for v0.1.0 and v0.2.0, and an explicit MIT license reflected in package metadata. Package metadata reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is final tagged-release preparation.
+The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, a curated `CHANGELOG.md` for v0.1.0 and v0.2.0, an explicit MIT license reflected in package metadata, and CI validation of the actual source distribution and wheel before release. The artifact job builds distributions, installs the generated wheel, and smoke-tests the installed CLI with a local-only DNS diagnostic. Package metadata reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is final tagged-release preparation after the artifact-validation pipeline is green.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and safety-relevant changes.
 
