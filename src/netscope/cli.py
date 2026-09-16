@@ -23,6 +23,13 @@ def _success_rate(value: str) -> float:
     return rate
 
 
+def _nonnegative_float(value: str) -> float:
+    number = float(value)
+    if number < 0.0:
+        raise argparse.ArgumentTypeError("must be zero or greater")
+    return number
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Defensive network visibility and diagnostics")
     parser.add_argument("--version", action="version", version=f"NetScope {__version__}")
@@ -45,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     gates = summary.add_mutually_exclusive_group()
     gates.add_argument("--require-all", action="store_true", help="Return exit code 1 if any bounded connection attempt fails")
     gates.add_argument("--min-success-rate", type=_success_rate, metavar="PERCENT", help="Return exit code 1 when success rate is below PERCENT (0-100)")
+    summary.add_argument("--max-jitter-ms", type=_nonnegative_float, metavar="MS", help="Return exit code 1 when measured latency jitter exceeds MS")
     _add_output_options(summary)
     path = subparsers.add_parser("path", help="Trace a bounded network path to one explicit host")
     path.add_argument("host")
@@ -103,6 +111,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.require_all and result.failures:
             return 1
         if args.min_success_rate is not None and result.success_rate_percent < args.min_success_rate:
+            return 1
+        if args.max_jitter_ms is not None and result.jitter_ms > args.max_jitter_ms:
             return 1
         return 0
     if args.command == "path":
