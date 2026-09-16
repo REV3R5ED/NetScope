@@ -13,6 +13,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 
 ### Fixed
 - TCP summaries now validate the host, port, timeout, and bounded attempt count before any connection attempt, so invalid requests report zero attempts instead of repeating the same configuration error as failed network probes.
+- TCP and path diagnostics now reject non-finite timeout values such as `NaN` and infinity before any socket connection or traceroute subprocess can run, keeping runtime limits explicit and preventing malformed numeric input from escaping bounded validation.
 
 ### Security
 - CSV exports now neutralize text fields that could be interpreted as spreadsheet formulas, including formula prefixes hidden behind leading spaces or control whitespace, while leaving numeric diagnostic values unchanged.
