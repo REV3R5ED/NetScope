@@ -151,9 +151,19 @@ def check_tcp(host: str, port: int, timeout: float = 3.0) -> TCPResult:
 def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) -> TCPSummaryResult:
     """Summarize up to ten connection attempts to one explicit endpoint."""
     target = host.strip()
-    if not 1 <= count <= 10:
-        return TCPSummaryResult(target, port, 0, 0, 0, 0.0, None, None, None, None, False, ("count must be between 1 and 10",))
-    results = tuple(check_tcp(host, port, timeout) for _ in range(count))
+    validation_error: str | None = None
+    if not target:
+        validation_error = "host is required"
+    elif not 1 <= port <= 65535:
+        validation_error = "port must be between 1 and 65535"
+    elif timeout <= 0 or timeout > 30:
+        validation_error = "timeout must be greater than 0 and at most 30 seconds"
+    elif not 1 <= count <= 10:
+        validation_error = "count must be between 1 and 10"
+    if validation_error:
+        return TCPSummaryResult(target, port, 0, 0, 0, 0.0, None, None, None, None, False, (validation_error,))
+
+    results = tuple(check_tcp(target, port, timeout) for _ in range(count))
     latencies = tuple(result.latency_ms for result in results if result.ok and result.latency_ms is not None)
     errors = tuple(result.error or "unknown connection error" for result in results if not result.ok)
     successes = len(latencies)
