@@ -51,6 +51,23 @@ def test_tcp_summary_human_output(monkeypatch, capsys):
     assert "Failures: 1" in output
 
 
+def test_tcp_summary_require_all_returns_nonzero_on_partial_failure(monkeypatch, capsys):
+    result = TCPSummaryResult("example.com", 443, 3, 2, 1, 10.0, 15.0, 20.0, True, ("timeout",))
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: result)
+
+    assert cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 1
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["successes"] == 2
+    assert payload["failures"] == 1
+
+
+def test_tcp_summary_require_all_succeeds_when_every_attempt_succeeds(monkeypatch):
+    result = TCPSummaryResult("example.com", 443, 3, 3, 0, 10.0, 15.0, 20.0, True)
+    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: result)
+
+    assert cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 0
+
+
 def test_path_json_output(monkeypatch, capsys):
     result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms",), False, True, "destination not reached")
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
