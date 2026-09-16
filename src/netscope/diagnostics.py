@@ -11,6 +11,21 @@ import subprocess
 import time
 
 
+def _json_native(value: object) -> object:
+    """Recursively normalize dataclass values for stable JSON-facing APIs."""
+    if isinstance(value, dict):
+        return {key: _json_native(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_json_native(item) for item in value]
+    return value
+
+
+def _result_dict(result: object) -> dict[str, object]:
+    normalized = _json_native(asdict(result))
+    assert isinstance(normalized, dict)
+    return normalized
+
+
 @dataclass(frozen=True)
 class DNSResult:
     """Normalized DNS lookup result suitable for CLI or JSON output."""
@@ -20,7 +35,7 @@ class DNSResult:
     error: str | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return _result_dict(self)
 
 
 @dataclass(frozen=True)
@@ -33,7 +48,7 @@ class TCPResult:
     error: str | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return _result_dict(self)
 
 
 @dataclass(frozen=True)
@@ -53,7 +68,7 @@ class TCPSummaryResult:
     errors: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return _result_dict(self)
 
 
 @dataclass(frozen=True)
@@ -66,7 +81,7 @@ class InterfaceResult:
     error: str | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return _result_dict(self)
 
 
 @dataclass(frozen=True)
@@ -80,7 +95,7 @@ class PathResult:
     error: str | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return _result_dict(self)
 
 
 def resolve_hostname(hostname: str) -> DNSResult:
