@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 import platform
 import shutil
 import socket
+import statistics
 import subprocess
 import time
 
@@ -37,15 +38,17 @@ class TCPResult:
 
 @dataclass(frozen=True)
 class TCPSummaryResult:
-    """Bounded latency summary for repeated checks of one explicit endpoint."""
+    """Bounded latency and reliability summary for one explicit endpoint."""
     host: str
     port: int
     attempts: int
     successes: int
     failures: int
+    success_rate_percent: float
     min_latency_ms: float | None
     avg_latency_ms: float | None
     max_latency_ms: float | None
+    jitter_ms: float | None
     ok: bool
     errors: tuple[str, ...] = ()
 
@@ -134,14 +137,16 @@ def summarize_tcp(host: str, port: int, count: int = 3, timeout: float = 3.0) ->
     """Summarize up to ten connection attempts to one explicit endpoint."""
     target = host.strip()
     if not 1 <= count <= 10:
-        return TCPSummaryResult(target, port, 0, 0, 0, None, None, None, False, ("count must be between 1 and 10",))
+        return TCPSummaryResult(target, port, 0, 0, 0, 0.0, None, None, None, None, False, ("count must be between 1 and 10",))
     results = tuple(check_tcp(host, port, timeout) for _ in range(count))
     latencies = tuple(result.latency_ms for result in results if result.ok and result.latency_ms is not None)
     errors = tuple(result.error or "unknown connection error" for result in results if not result.ok)
     successes = len(latencies)
+    success_rate = round(successes / count * 100, 2)
     if not latencies:
-        return TCPSummaryResult(target, port, count, 0, count, None, None, None, False, errors)
-    return TCPSummaryResult(target, port, count, successes, count - successes, round(min(latencies), 2), round(sum(latencies) / successes, 2), round(max(latencies), 2), True, errors)
+        return TCPSummaryResult(target, port, count, 0, count, 0.0, None, None, None, None, False, errors)
+    jitter = round(statistics.pstdev(latencies), 2) if len(latencies) > 1 else 0.0
+    return TCPSummaryResult(target, port, count, successes, count - successes, success_rate, round(min(latencies), 2), round(sum(latencies) / successes, 2), round(max(latencies), 2), jitter, True, errors)
 
 
 def trace_path(host: str, max_hops: int = 15, timeout: float = 2.0) -> PathResult:
