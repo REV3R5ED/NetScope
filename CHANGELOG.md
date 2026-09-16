@@ -17,6 +17,9 @@ All notable changes to NetScope are documented here. The project follows semanti
 ### Security
 - CSV exports now neutralize text fields that could be interpreted as spreadsheet formulas, including formula prefixes hidden behind leading spaces or control whitespace, while leaving numeric diagnostic values unchanged.
 
+### Release hardening
+- CI now validates built source and wheel distribution metadata with `twine check` before installing and smoke-testing the wheel, catching malformed package metadata before a tagged portfolio release.
+
 ## [0.2.0] - 2026-09-15
 
 ### Added
