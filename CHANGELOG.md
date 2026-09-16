@@ -11,6 +11,9 @@ All notable changes to NetScope are documented here. The project follows semanti
 - `path --require-reached` for automation workflows that need a non-zero exit status when a bounded route trace completes but does not reach its explicit destination; partial diagnostic output is still preserved.
 - TCP summaries now report success rate and latency jitter (population standard deviation) in human, JSON, and CSV output for clearer intermittent-connectivity diagnostics.
 
+### Fixed
+- TCP summaries now validate the host, port, timeout, and bounded attempt count before any connection attempt, so invalid requests report zero attempts instead of repeating the same configuration error as failed network probes.
+
 ## [0.2.0] - 2026-09-15
 
 ### Added
