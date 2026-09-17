@@ -61,6 +61,16 @@ def test_csv_report_neutralizes_formula_like_text_after_whitespace(hostname):
     assert row["hostname"] == "'" + hostname
 
 
+@pytest.mark.parametrize(
+    "hostname",
+    ["\u00a0=1+1", "\u2003+cmd", "\u202f-formula", "\u3000@SUM(A1:A2)"],
+)
+def test_csv_report_neutralizes_formula_like_text_after_unicode_whitespace(hostname):
+    row = _read(to_csv(DNSResult(hostname, (), False, "resolution failed")))
+
+    assert row["hostname"] == "'" + hostname
+
+
 def test_csv_report_does_not_modify_safe_text_or_numeric_values():
     result = TCPSummaryResult(
         host="example.test",
