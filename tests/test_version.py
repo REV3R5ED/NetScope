@@ -5,7 +5,7 @@ from netscope.cli import build_parser
 
 
 def test_runtime_version_matches_release_candidate():
-    assert __version__ == "0.2.0"
+    assert __version__ == "0.3.0"
 
 
 def test_cli_version_reports_release_candidate(capsys):
@@ -14,4 +14,4 @@ def test_cli_version_reports_release_candidate(capsys):
         parser.parse_args(["--version"])
 
     assert exc_info.value.code == 0
-    assert capsys.readouterr().out.strip() == "NetScope 0.2.0"
+    assert capsys.readouterr().out.strip() == "NetScope 0.3.0"
