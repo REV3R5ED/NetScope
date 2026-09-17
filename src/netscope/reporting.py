@@ -16,7 +16,7 @@ class DictResult(Protocol):
 
 def _protect_csv_text(value: str) -> str:
     """Neutralize spreadsheet formulas while preserving the original text."""
-    candidate = value.lstrip(" \t\r\n")
+    candidate = value.lstrip()
     if candidate.startswith(("=", "+", "-", "@")):
         return "'" + value
     return value
