@@ -20,7 +20,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 
 ### Security
 - Diagnostic host inputs now reject ASCII control characters before resolver, socket, or traceroute activity, preventing malformed host values from corrupting terminal/report output or being forwarded to platform networking tools.
-- CSV exports now neutralize text fields that could be interpreted as spreadsheet formulas, including formula prefixes hidden behind leading spaces or control whitespace, while leaving numeric diagnostic values unchanged.
+- CSV exports now neutralize text fields that could be interpreted as spreadsheet formulas, including formula prefixes hidden behind leading ASCII or Unicode whitespace, while leaving numeric diagnostic values unchanged.
 
 ### Release hardening
 - CI now validates built source and wheel distribution metadata with `twine check` before installing and smoke-testing the wheel, catching malformed package metadata before a tagged portfolio release.
@@ -33,22 +33,23 @@ All notable changes to NetScope are documented here. The project follows semanti
 - Deterministic CSV exports alongside JSON and human-readable output.
 - CLI integration coverage for human-readable, JSON, CSV, failure-exit, and argument-validation behavior.
 
-### Improved
-- Local interface inspection now degrades gracefully when `socket.if_nameindex` is unavailable while retaining local address visibility.
-- Structured diagnostic results are consistent across commands for automation and reporting workflows.
-- Safety boundaries are documented for single-target TCP and path diagnostics.
+### Changed
+- Local interface inspection now degrades gracefully when interface enumeration is unavailable, while preserving structured local-address visibility.
+- Package metadata now explicitly requires Python 3.10+ and exposes the `netscope` console entry point.
 
-### Safety
-- No CIDR sweeps, port-range scanning, exploit delivery, credential attacks, persistence, or stealth functionality.
-- TCP diagnostics remain limited to one explicit host and port per invocation; summaries are capped at 10 attempts.
-- Path diagnostics remain limited to one explicit destination, at most 30 hops, bounded per-hop waits, and shell-free subprocess execution.
+### Security
+- TCP diagnostics remain restricted to one explicit host and one explicit port per invocation; summary mode is capped at 10 attempts.
+- Path diagnostics remain restricted to one explicit host, cap traces at 30 hops and 10 seconds per hop, request numeric output to avoid reverse-DNS lookups, and invoke the platform utility without a shell.
 
 ## [0.1.0] - 2026-09-15
 
 ### Added
-- Initial Python package and `netscope` CLI.
-- Local interface/address inspection.
-- DNS resolution diagnostics.
-- Bounded single-target TCP connectivity checks.
-- Normalized result models and JSON output.
-- Unit tests and CI across supported Python versions.
+- Initial Python package and command-line interface.
+- Read-only local interface/address inspection.
+- DNS resolution diagnostics with deterministic normalized output.
+- Single-target, single-port TCP connectivity diagnostics with bounded timeouts.
+- Human-readable and JSON reporting.
+- Unit tests and CI coverage.
+
+### Security
+- Project scope explicitly excludes exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning.
