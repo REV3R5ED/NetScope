@@ -8,6 +8,7 @@ import math
 
 from . import __version__
 from .diagnostics import check_tcp, inspect_interfaces, resolve_hostname, summarize_tcp, trace_path
+from .dns import resolve_hostname_family
 from .reporting import to_csv
 
 
@@ -39,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_output_options(interfaces)
     dns = subparsers.add_parser("dns", help="Resolve a hostname with the system DNS resolver")
     dns.add_argument("hostname")
+    dns.add_argument("--family", choices=("ipv4", "ipv6"), help="Restrict resolution to one address family")
     _add_output_options(dns)
     tcp = subparsers.add_parser("tcp", help="Test one explicit TCP host and port")
     tcp.add_argument("host")
@@ -88,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Interface inspection failed: {result.error}")
         return 0 if result.ok else 1
     if args.command == "dns":
-        result = resolve_hostname(args.hostname)
+        result = resolve_hostname_family(args.hostname, args.family) if args.family else resolve_hostname(args.hostname)
         if not _emit_structured(result, args):
             print(f"{result.hostname}: {', '.join(result.addresses)}" if result.ok else f"{result.hostname}: resolution failed: {result.error}")
         return 0 if result.ok else 1
