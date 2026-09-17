@@ -54,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
     gates.add_argument("--require-all", action="store_true", help="Return exit code 1 if any bounded connection attempt fails")
     gates.add_argument("--min-success-rate", type=_success_rate, metavar="PERCENT", help="Return exit code 1 when success rate is below PERCENT (0-100)")
     summary.add_argument("--max-jitter-ms", type=_nonnegative_float, metavar="MS", help="Return exit code 1 when measured latency jitter exceeds MS")
+    summary.add_argument("--max-avg-latency-ms", type=_nonnegative_float, metavar="MS", help="Return exit code 1 when average successful connection latency exceeds MS")
     _add_output_options(summary)
     path = subparsers.add_parser("path", help="Trace a bounded network path to one explicit host")
     path.add_argument("host")
@@ -117,6 +118,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.min_success_rate is not None and result.success_rate_percent < args.min_success_rate:
             return 1
         if args.max_jitter_ms is not None and result.jitter_ms > args.max_jitter_ms:
+            return 1
+        if args.max_avg_latency_ms is not None and result.avg_latency_ms > args.max_avg_latency_ms:
             return 1
         return 0
     if args.command == "path":
