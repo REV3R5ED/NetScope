@@ -104,6 +104,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Latency ms: min {result.min_latency_ms:.2f}, avg {result.avg_latency_ms:.2f}, max {result.max_latency_ms:.2f}, jitter {result.jitter_ms:.2f}")
                 if result.failures:
                     print(f"Failures: {result.failures}")
+                    unique_errors = tuple(dict.fromkeys(result.errors))
+                    if unique_errors:
+                        print(f"Failure details: {'; '.join(unique_errors)}")
             else:
                 detail = result.errors[0] if result.errors else "no successful connections"
                 print(f"{result.host}:{result.port}: summary failed: {detail}")
