@@ -26,7 +26,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 ### Release hardening
 - CI now validates built source and wheel distribution metadata with `twine check` before installing and smoke-testing the wheel, catching malformed package metadata before a tagged portfolio release.
 
-## [0.2.0] - 2026-09-15
+## [0.2.0] - 2026-09-17
 
 ### Added
 - Bounded TCP latency summaries with success/failure counts and min/average/max latency.
