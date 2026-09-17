@@ -2,7 +2,7 @@
 
 Defensive network visibility and diagnostics toolkit for operators, IT professionals, and security engineers.
 
-> Status: v0.2 visibility milestone feature-complete; release hardening in progress
+> Status: v0.2.0 release candidate ready; awaiting the first tagged GitHub release
 
 ## Goals
 
@@ -80,11 +80,11 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] validate built release artifacts in CI
 - [x] add strict health-gate behavior for bounded TCP summaries
 - [x] add configurable availability and jitter health gates
-- [ ] prepare tagged portfolio release
+- [ ] publish tagged portfolio release
 
 ## Development
 
-The v0.2 visibility milestone is feature-complete. Release hardening now includes integration coverage across the public CLI surface, a curated `CHANGELOG.md` for v0.1.0 and v0.2.0, an explicit MIT license reflected in package metadata, CI validation of the actual source distribution and wheel before release, and opt-in TCP-summary health gates for availability and latency stability. The artifact job builds distributions, installs the generated wheel, and smoke-tests the installed CLI with a local-only DNS diagnostic. Package metadata reports version 0.2.0 so the codebase and release documentation agree. CI runs the full test suite across Python 3.10–3.13. Remaining work is final tagged-release preparation after the latest pipeline is green.
+The v0.2 visibility milestone and release hardening are complete in the repository. Integration coverage spans the public CLI surface, `CHANGELOG.md` documents v0.1.0 and v0.2.0, the MIT license is reflected in package metadata, and CI validates the actual source distribution and wheel before release. Opt-in TCP-summary health gates cover availability and latency stability. The artifact job builds distributions, installs the generated wheel, and smoke-tests the installed CLI with a local-only DNS diagnostic. Package metadata reports version 0.2.0, and CI runs the full test suite across Python 3.10–3.13. The remaining release step is publishing the first `v0.2.0` tag/GitHub Release from a green `main` commit.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and safety-relevant changes.
 
