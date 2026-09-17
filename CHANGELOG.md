@@ -10,6 +10,7 @@ All notable changes to NetScope are documented here. The project follows semanti
 - `tcp-summary --max-jitter-ms MS` for bounded latency-stability gates that return non-zero when measured jitter exceeds an explicit non-negative threshold; it can be combined with the success-rate gate.
 - `path --require-reached` for automation workflows that need a non-zero exit status when a bounded route trace completes but does not reach its explicit destination; partial diagnostic output is still preserved.
 - TCP summaries now report success rate and latency jitter (population standard deviation) in human, JSON, and CSV output for clearer intermittent-connectivity diagnostics.
+- Human-readable TCP summaries now include stable, de-duplicated failure reasons when some bounded attempts fail, making intermittent endpoint problems easier to diagnose without switching output formats.
 
 ### Fixed
 - Local interface diagnostics now reject a blank OS hostname before interface enumeration or resolver lookup, returning a structured failure instead of attempting ambiguous local-name resolution.
