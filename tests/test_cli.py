@@ -45,6 +45,7 @@ def test_tcp_summary_human_output(monkeypatch, capsys):
     assert "2/3 successful (66.67%)" in output
     assert "min 10.00, avg 15.00, max 20.00, jitter 4.08" in output
     assert "Failures: 1" in output
+    assert "Failure details: timeout" in output
 
 
 def test_tcp_summary_require_all_returns_nonzero_on_partial_failure(monkeypatch, capsys):
