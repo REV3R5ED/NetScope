@@ -7,6 +7,7 @@ import json
 import math
 
 from . import __version__
+from .address import classify_address
 from .diagnostics import check_tcp, inspect_interfaces, resolve_hostname, summarize_tcp, trace_path
 from .dns import resolve_hostname_family
 from .reporting import to_csv
@@ -38,6 +39,9 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     interfaces = subparsers.add_parser("interfaces", help="Inspect local interfaces and host addresses")
     _add_output_options(interfaces)
+    address = subparsers.add_parser("address", help="Classify one literal IPv4 or IPv6 address locally")
+    address.add_argument("address")
+    _add_output_options(address)
     dns = subparsers.add_parser("dns", help="Resolve a hostname with the system DNS resolver")
     dns.add_argument("hostname")
     dns.add_argument("--family", choices=("ipv4", "ipv6"), help="Restrict resolution to one address family")
@@ -88,6 +92,15 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Addresses: {', '.join(result.addresses) or 'none reported'}")
             else:
                 print(f"Interface inspection failed: {result.error}")
+        return 0 if result.ok else 1
+    if args.command == "address":
+        result = classify_address(args.address)
+        if not _emit_structured(result, args):
+            if result.ok:
+                print(f"{result.address}: IPv{result.version} {result.scope}")
+                print(f"Reverse pointer: {result.reverse_pointer}")
+            else:
+                print(f"{result.address}: classification failed: {result.error}")
         return 0 if result.ok else 1
     if args.command == "dns":
         result = resolve_hostname_family(args.hostname, args.family) if args.family else resolve_hostname(args.hostname)
