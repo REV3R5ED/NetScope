@@ -4,6 +4,12 @@ All notable changes to NetScope are documented here. The project follows semanti
 
 ## [Unreleased]
 
+### Added
+- `netscope network PREFIX` exposes offline IPv4/IPv6 network-prefix classification through the primary CLI, with human, JSON, and CSV output. It calculates boundaries and address counts arithmetically without enumerating hosts or generating network traffic.
+
+### Security
+- Network-prefix CLI classification requires a canonical prefix and remains fully offline: no DNS resolution, sockets, packets, host enumeration, subprocesses, or system mutation.
+
 ## [0.3.0] - 2026-09-17
 
 ### Added
