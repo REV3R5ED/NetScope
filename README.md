@@ -11,7 +11,7 @@ NetScope makes common network diagnostics easy to run, understand, automate, and
 Current capabilities include:
 
 - local interface and address visibility
-- offline IPv4/IPv6 literal address classification
+- offline IPv4/IPv6 literal address and canonical network-prefix classification
 - DNS resolution diagnostics with optional IPv4/IPv6 family selection
 - bounded single-target TCP connectivity checks
 - bounded latency and reachability summaries with CI-friendly health gates
@@ -28,6 +28,8 @@ python -m pip install -e '.[dev]'
 netscope interfaces
 netscope address 10.20.30.40
 netscope address 2001:db8::1 --json
+netscope network 10.20.30.0/24
+netscope network 2001:db8::/126 --json
 netscope dns example.com
 netscope dns example.com --family ipv6 --json
 netscope tcp example.com 443 --timeout 2 --json
@@ -40,6 +42,8 @@ pytest -q
 `netscope interfaces` performs read-only local inspection. On Python/platform combinations without `socket.if_nameindex`, it degrades gracefully and still reports resolved local-host addresses with a structured warning.
 
 `netscope address ADDRESS` classifies one literal IPv4 or IPv6 address locally. It performs no DNS lookup or network traffic and reports normalized address, version, scope, and a syntactically calculated reverse pointer.
+
+`netscope network PREFIX` classifies one canonical IPv4 or IPv6 network prefix locally. It reports normalized boundaries, prefix length, address count, and scope using arithmetic only. Host bits are rejected rather than silently normalized, and the command never enumerates addresses or generates network traffic.
 
 DNS diagnostics use the operating system resolver and provide deterministic normalized results. `--family ipv4` or `--family ipv6` narrows troubleshooting to one address family without connecting to any returned address. TCP diagnostics make exactly one connection attempt to the explicitly supplied host and port, measure connection latency, enforce a maximum 30-second timeout, and support the same structured reporting workflow.
 
@@ -55,7 +59,7 @@ Every diagnostic command supports either `--json` or `--csv`. The options are mu
 
 ## Safety Scope
 
-NetScope is designed for defensive diagnostics and authorized environments. Development intentionally avoids exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning. TCP and path commands accept one explicit host per invocation; TCP commands accept one explicit port. Summary checks are hard-capped at 10 attempts. Path diagnostics are hard-capped at 30 hops and invoke the OS utility without a shell. Interface and literal-address inspection are read-only; literal-address classification is fully offline.
+NetScope is designed for defensive diagnostics and authorized environments. Development intentionally avoids exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning. TCP and path commands accept one explicit host per invocation; TCP commands accept one explicit port. Summary checks are hard-capped at 10 attempts. Path diagnostics are hard-capped at 30 hops and invoke the OS utility without a shell. Interface, literal-address, and network-prefix inspection are read-only; address and network-prefix classification are fully offline and never enumerate hosts.
 
 ## Roadmap
 
@@ -78,13 +82,14 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] CI-friendly TCP health gates
 - [x] address-family-specific DNS diagnostics
 - [x] offline IPv4/IPv6 address classification
+- [x] offline canonical IPv4/IPv6 network-prefix classification and CLI reporting
 - [x] hardened input and CSV reporting behavior
 - [x] validate built release artifacts in CI
 - [ ] publish tagged portfolio release
 
 ## Development
 
-The v0.3.0 release candidate aligns package/runtime version metadata with the code currently on `main` and documents the post-v0.2 operational diagnostics as a distinct release boundary. CI covers Python 3.10–3.13 and validates the built source distribution and wheel before release. The remaining release step is to validate the exact candidate commit in CI and publish the first `v0.3.0` tag/GitHub Release only after those checks are green.
+The v0.3.0 release candidate aligns package/runtime version metadata with the code currently on `main` and documents the operational diagnostics as a distinct release boundary. CI covers Python 3.10–3.13 and validates the built source distribution and wheel before release. The remaining release step is to publish the first `v0.3.0` tag/GitHub Release only after the exact candidate commit passes those checks.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and safety-relevant changes.
 
