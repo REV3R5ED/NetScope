@@ -10,6 +10,7 @@ from . import __version__
 from .address import classify_address
 from .diagnostics import check_tcp, inspect_interfaces, resolve_hostname, summarize_tcp, trace_path
 from .dns import resolve_hostname_family
+from .network import classify_network
 from .reporting import to_csv
 
 
@@ -42,6 +43,9 @@ def build_parser() -> argparse.ArgumentParser:
     address = subparsers.add_parser("address", help="Classify one literal IPv4 or IPv6 address locally")
     address.add_argument("address")
     _add_output_options(address)
+    network = subparsers.add_parser("network", help="Classify one canonical IPv4 or IPv6 network prefix locally")
+    network.add_argument("network")
+    _add_output_options(network)
     dns = subparsers.add_parser("dns", help="Resolve a hostname with the system DNS resolver")
     dns.add_argument("hostname")
     dns.add_argument("--family", choices=("ipv4", "ipv6"), help="Restrict resolution to one address family")
@@ -101,6 +105,16 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Reverse pointer: {result.reverse_pointer}")
             else:
                 print(f"{result.address}: classification failed: {result.error}")
+        return 0 if result.ok else 1
+    if args.command == "network":
+        result = classify_network(args.network)
+        if not _emit_structured(result, args):
+            if result.ok:
+                print(f"{result.network}: IPv{result.version} /{result.prefix_length} {result.scope}")
+                print(f"Range: {result.network_address} - {result.last_address}")
+                print(f"Addresses: {result.num_addresses}")
+            else:
+                print(f"{result.network}: classification failed: {result.error}")
         return 0 if result.ok else 1
     if args.command == "dns":
         result = resolve_hostname_family(args.hostname, args.family) if args.family else resolve_hostname(args.hostname)
