@@ -45,3 +45,10 @@ jobs:
         run: |
           netscope --help
           netscope dns localhost --json
+      - name: Preserve validated distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: netscope-dist-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
