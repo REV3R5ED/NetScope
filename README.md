@@ -8,6 +8,20 @@ Defensive network visibility and diagnostics toolkit for operators, IT professio
 
 NetScope makes common network diagnostics easy to run, understand, automate, and export without turning into an offensive scanning framework.
 
+## Capability matrix
+
+| Command | Purpose | Network activity | Automation output |
+| --- | --- | --- | --- |
+| `netscope interfaces` | Inspect local interfaces and addresses | Local inspection only | JSON / CSV |
+| `netscope address ADDRESS` | Classify one IPv4/IPv6 literal | None | JSON / CSV |
+| `netscope network PREFIX` | Classify one canonical IPv4/IPv6 prefix | None | JSON / CSV |
+| `netscope dns HOST` | Diagnose name resolution | DNS resolution only | JSON / CSV |
+| `netscope tcp HOST PORT` | Test one explicit TCP endpoint | One bounded connection attempt | JSON / CSV |
+| `netscope tcp-summary HOST PORT` | Measure bounded endpoint reliability and latency | 1–10 bounded attempts | JSON / CSV + health gates |
+| `netscope path HOST` | Inspect the route to one explicit destination | Bounded OS traceroute/tracert | JSON / CSV + reachability gate |
+
+This separation is intentional: offline classification stays fully local, while active diagnostics require an explicit destination and enforce hard bounds. The result is a small toolkit that demonstrates network troubleshooting, cross-platform subprocess handling, typed/structured reporting, defensive guardrails, and CI-oriented exit semantics without broad scanning behavior.
+
 Current capabilities include:
 
 - local interface and address visibility
