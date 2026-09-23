@@ -37,20 +37,41 @@ Current capabilities include:
 
 Requires Python 3.10+.
 
+### Install the release candidate
+
+Until the first tagged release is published, install the reviewed `main` branch directly from GitHub:
+
 ```bash
-python -m pip install -e '.[dev]'
+python -m pip install "git+https://github.com/REV3R5ED/NetScope.git@main"
+netscope --help
 netscope interfaces
 netscope address 10.20.30.40
+netscope dns example.com --json
+```
+
+Pin a commit SHA instead of `main` when reproducibility matters. Once `v0.3.0` is tagged, prefer that immutable tag for portfolio demos and operational evaluation.
+
+### Contributor setup
+
+Clone the repository and use an editable install only when developing or running the test suite:
+
+```bash
+git clone https://github.com/REV3R5ED/NetScope.git
+cd NetScope
+python -m pip install -e '.[dev]'
+pytest -q
+```
+
+A few representative diagnostics:
+
+```bash
 netscope address 2001:db8::1 --json
 netscope network 10.20.30.0/24
 netscope network 2001:db8::/126 --json
-netscope dns example.com
 netscope dns example.com --family ipv6 --json
 netscope tcp example.com 443 --timeout 2 --json
-netscope tcp-summary example.com 443 --count 5
 netscope tcp-summary example.com 443 --count 5 --min-success-rate 80 --max-jitter-ms 25 --max-avg-latency-ms 150 --json
 netscope path example.com --max-hops 12 --require-reached --json
-pytest -q
 ```
 
 `netscope interfaces` performs read-only local inspection. On Python/platform combinations without `socket.if_nameindex`, it degrades gracefully and still reports resolved local-host addresses with a structured warning.
