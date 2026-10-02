@@ -32,16 +32,23 @@ def _partial_summary() -> TCPSummaryResult:
 
 
 def test_failing_tcp_health_gate_keeps_json_stdout_parseable(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _partial_summary())
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _partial_summary()
+    )
 
-    assert cli.main([
-        "tcp-summary",
-        "example.invalid",
-        "443",
-        "--min-success-rate",
-        "90",
-        "--json",
-    ]) == 1
+    assert (
+        cli.main(
+            [
+                "tcp-summary",
+                "example.invalid",
+                "443",
+                "--min-success-rate",
+                "90",
+                "--json",
+            ]
+        )
+        == 1
+    )
 
     captured = capsys.readouterr()
     payload = json.loads(captured.out)
@@ -51,16 +58,23 @@ def test_failing_tcp_health_gate_keeps_json_stdout_parseable(monkeypatch, capsys
 
 
 def test_failing_tcp_health_gate_keeps_csv_stdout_parseable(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _partial_summary())
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _partial_summary()
+    )
 
-    assert cli.main([
-        "tcp-summary",
-        "example.invalid",
-        "443",
-        "--max-jitter-ms",
-        "4",
-        "--csv",
-    ]) == 1
+    assert (
+        cli.main(
+            [
+                "tcp-summary",
+                "example.invalid",
+                "443",
+                "--max-jitter-ms",
+                "4",
+                "--csv",
+            ]
+        )
+        == 1
+    )
 
     captured = capsys.readouterr()
     rows = list(csv.DictReader(io.StringIO(captured.out)))
@@ -81,14 +95,19 @@ def test_failing_path_reachability_gate_keeps_json_context(monkeypatch, capsys):
     )
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
 
-    assert cli.main([
-        "path",
-        "example.invalid",
-        "--max-hops",
-        "8",
-        "--require-reached",
-        "--json",
-    ]) == 1
+    assert (
+        cli.main(
+            [
+                "path",
+                "example.invalid",
+                "--max-hops",
+                "8",
+                "--require-reached",
+                "--json",
+            ]
+        )
+        == 1
+    )
 
     captured = capsys.readouterr()
     payload = json.loads(captured.out)

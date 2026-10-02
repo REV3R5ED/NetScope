@@ -26,7 +26,9 @@ def test_tcp_invalid_timeout_never_opens_socket(monkeypatch, timeout):
     monkeypatch.setattr(diagnostics.socket, "create_connection", unexpected_connection)
     result = diagnostics.check_tcp("example.com", 443, timeout)
     assert result.ok is False
-    assert result.error == "timeout must be finite, greater than 0, and at most 30 seconds"
+    assert (
+        result.error == "timeout must be finite, greater than 0, and at most 30 seconds"
+    )
 
 
 @pytest.mark.parametrize("count", [0, 11])
@@ -60,7 +62,9 @@ def test_path_invalid_timeout_never_spawns_process(monkeypatch, timeout):
     monkeypatch.setattr(diagnostics.subprocess, "run", unexpected_run)
     result = diagnostics.trace_path("example.com", timeout=timeout)
     assert result.ok is False
-    assert result.error == "timeout must be finite, greater than 0, and at most 10 seconds"
+    assert (
+        result.error == "timeout must be finite, greater than 0, and at most 10 seconds"
+    )
 
 
 def test_path_option_like_host_never_spawns_process(monkeypatch):

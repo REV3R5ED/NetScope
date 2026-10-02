@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/address.schema.json",
+  "title": "NetScope address command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string"
+    },
+    "version": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "scope": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reverse_pointer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "address",
+    "error",
+    "ok",
+    "reverse_pointer",
+    "scope",
+    "version"
+  ],
+  "additionalProperties": false
+}

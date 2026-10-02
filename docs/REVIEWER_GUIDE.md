@@ -11,9 +11,12 @@ NetScope requires Python 3.10+.
 ```bash
 python -m pip install -e '.[dev]'
 pytest -q
+ruff check .
+ruff format --check .
+mypy src
 ```
 
-The test suite exercises the normalized result models, CLI behavior, defensive bounds, reporting, and cross-platform route handling. CI additionally tests supported Python versions and validates built distribution artifacts.
+The test suite exercises the normalized result models, CLI behavior, defensive bounds, reporting, and cross-platform route handling. Ruff enforces lint and formatting, and mypy runs in strict mode over the fully annotated codebase. CI additionally tests supported Python versions and validates built distribution artifacts.
 
 ### 2. Exercise the offline diagnostics
 
@@ -40,7 +43,17 @@ netscope tcp-summary example.com 443 --count 3 --min-success-rate 80 --json
 
 The TCP commands operate on one explicit endpoint. Summary checks are intentionally capped at 10 attempts and can return a non-zero exit status when a health gate fails while preserving the diagnostic report.
 
-### 4. Inspect the defensive route implementation
+### 4. Exercise the monitoring-oriented commands
+
+```bash
+netscope tls example.com 443 --min-days-cert-valid 30 --json
+netscope ping example.com --count 4 --json
+netscope schema tls
+```
+
+The TLS command completes a single bounded handshake and reports certificate details parsed from the peer bytes; the expiry gate makes it a CI-friendly certificate monitor. `netscope schema` prints the versioned JSON Schema for any command's JSON output, and the CI contract test validates live output against those schemas.
+
+### 5. Inspect the defensive route implementation
 
 ```bash
 netscope path example.com --max-hops 12 --require-reached --json
@@ -48,7 +61,7 @@ netscope path example.com --max-hops 12 --require-reached --json
 
 The path command uses the operating system's `traceroute`/`tracert` utility for one explicit destination, requests numeric output, enforces hop/wait bounds, and invokes the process without a shell. Partial diagnostic output is retained when the destination is not reached.
 
-### 5. Review the engineering signals
+### 6. Review the engineering signals
 
 Useful areas to inspect include:
 
@@ -57,7 +70,8 @@ Useful areas to inspect include:
 - deterministic exit semantics for CI-oriented health gates;
 - subprocess handling for POSIX and Windows route diagnostics;
 - tests covering malformed input, hard limits, structured output, and platform differences;
-- GitHub Actions coverage across supported Python versions and built artifacts; and
+- versioned JSON Schema documents with a CI contract test validating live command output;
+- GitHub Actions coverage across supported Python versions, lint/format/type checks, and built artifacts; and
 - `SECURITY.md` for vulnerability-reporting and authorization expectations.
 
 ## What NetScope demonstrates

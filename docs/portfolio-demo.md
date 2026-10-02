@@ -59,6 +59,27 @@ netscope tcp-summary example.com 443 \
 
 The command targets one explicit host and one explicit port. Sampling is intentionally bounded by the CLI rather than becoming a scanner.
 
+For TLS certificate monitoring on the same endpoint:
+
+```bash
+netscope tls example.com 443 --min-days-cert-valid 30 --json
+```
+
+And to make the check repeatable from cron or CI, save it as a profile:
+
+```bash
+cat > netscope-profiles.toml <<'EOF'
+[pre-maintenance]
+type = "tcp-summary"
+host = "example.com"
+port = 443
+count = 5
+min_success_rate = 100
+max_avg_latency_ms = 500
+EOF
+netscope check --profile pre-maintenance --json
+```
+
 ## Offline review path
 
 A reviewer who does not want to generate any network traffic can still inspect core behavior:

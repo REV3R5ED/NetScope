@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/dns.schema.json",
+  "title": "NetScope dns command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "hostname": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string"
+    },
+    "addresses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "addresses",
+    "error",
+    "hostname",
+    "ok"
+  ],
+  "additionalProperties": false
+}

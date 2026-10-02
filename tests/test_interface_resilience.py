@@ -21,7 +21,9 @@ def test_inspect_interfaces_rejects_blank_hostname_without_further_lookups(monke
     monkeypatch.setattr(socket, "gethostname", lambda: "   ")
 
     def unexpected(*args, **kwargs):
-        raise AssertionError("interface and resolver lookups should not run without a hostname")
+        raise AssertionError(
+            "interface and resolver lookups should not run without a hostname"
+        )
 
     monkeypatch.setattr(socket, "if_nameindex", unexpected)
     monkeypatch.setattr(socket, "getaddrinfo", unexpected)

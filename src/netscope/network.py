@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import ipaddress
+from dataclasses import asdict, dataclass
+
+from .validation import has_control_characters
 
 
 @dataclass(frozen=True)
@@ -27,16 +29,40 @@ class NetworkResult:
 def classify_network(value: str) -> NetworkResult:
     """Classify one IPv4/IPv6 prefix locally without enumerating or probing hosts."""
     if not isinstance(value, str):
-        return NetworkResult("", None, None, None, None, None, None, False, "network must be a string")
+        return NetworkResult(
+            "", None, None, None, None, None, None, False, "network must be a string"
+        )
     target = value.strip()
     if not target:
-        return NetworkResult(value, None, None, None, None, None, None, False, "network is required")
-    if any(ord(character) < 32 or ord(character) == 127 for character in target):
-        return NetworkResult(target, None, None, None, None, None, None, False, "network must not contain control characters")
+        return NetworkResult(
+            value, None, None, None, None, None, None, False, "network is required"
+        )
+    if has_control_characters(target):
+        return NetworkResult(
+            target,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            False,
+            "network must not contain control characters",
+        )
     try:
         network = ipaddress.ip_network(target, strict=True)
     except ValueError:
-        return NetworkResult(target, None, None, None, None, None, None, False, "network must be a canonical IPv4 or IPv6 prefix")
+        return NetworkResult(
+            target,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            False,
+            "network must be a canonical IPv4 or IPv6 prefix",
+        )
 
     address = network.network_address
     if address.is_unspecified:
@@ -47,10 +73,10 @@ def classify_network(value: str) -> NetworkResult:
         scope = "link-local"
     elif address.is_multicast:
         scope = "multicast"
-    elif address.is_private:
-        scope = "private"
     elif address.is_reserved:
         scope = "reserved"
+    elif address.is_private:
+        scope = "private"
     elif address.is_global:
         scope = "global"
     else:

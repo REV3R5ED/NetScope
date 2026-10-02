@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/path.schema.json",
+  "title": "NetScope path command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "max_hops": {
+      "type": "integer"
+    },
+    "hops": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "reached": {
+      "type": "boolean"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "error",
+    "hops",
+    "host",
+    "max_hops",
+    "ok",
+    "reached"
+  ],
+  "additionalProperties": false
+}

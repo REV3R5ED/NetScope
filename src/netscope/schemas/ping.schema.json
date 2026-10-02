@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/ping.schema.json",
+  "title": "NetScope ping command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "successes": {
+      "type": "integer"
+    },
+    "failures": {
+      "type": "integer"
+    },
+    "success_rate_percent": {
+      "type": "number"
+    },
+    "min_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "avg_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "max_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "avg_latency_ms",
+    "count",
+    "errors",
+    "failures",
+    "host",
+    "max_latency_ms",
+    "min_latency_ms",
+    "ok",
+    "success_rate_percent",
+    "successes"
+  ],
+  "additionalProperties": false
+}
