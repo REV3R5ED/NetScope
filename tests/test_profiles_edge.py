@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from netscope import profiles
@@ -81,6 +83,9 @@ def test_coerce_int_rejects_bad_values():
         _coerce_int("p", "port", 70000, 1, 65535)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11), reason="stdlib tomllib needs Python 3.11+"
+)
 def test_load_profiles_rejects_non_table_profile(tmp_path):
     path = tmp_path / "p.toml"
     path.write_text('[a]\ntype = "tcp"\n', encoding="utf-8")
