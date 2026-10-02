@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/network.schema.json",
+  "title": "NetScope network command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "network": {
+      "type": "string"
+    },
+    "version": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "prefix_length": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "network_address": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_address": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "num_addresses": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "scope": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "error",
+    "last_address",
+    "network",
+    "network_address",
+    "num_addresses",
+    "ok",
+    "prefix_length",
+    "scope",
+    "version"
+  ],
+  "additionalProperties": false
+}

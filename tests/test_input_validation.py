@@ -99,7 +99,10 @@ def test_tcp_rejects_non_numeric_timeouts_without_network(monkeypatch):
     for timeout in (True, "3", None):
         result = check_tcp("example.test", 443, timeout=timeout)
         assert result.ok is False
-        assert result.error == "timeout must be finite, greater than 0, and at most 30 seconds"
+        assert (
+            result.error
+            == "timeout must be finite, greater than 0, and at most 30 seconds"
+        )
 
 
 def test_summary_rejects_non_integer_count_without_attempts(monkeypatch):

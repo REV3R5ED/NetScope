@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import ipaddress
+from dataclasses import asdict, dataclass
+
+from .validation import has_control_characters
 
 
 @dataclass(frozen=True)
@@ -28,12 +30,26 @@ def classify_address(value: str) -> AddressResult:
     target = value.strip()
     if not target:
         return AddressResult(value, None, None, None, False, "address is required")
-    if any(ord(character) < 32 or ord(character) == 127 for character in target):
-        return AddressResult(target, None, None, None, False, "address must not contain control characters")
+    if has_control_characters(target):
+        return AddressResult(
+            target,
+            None,
+            None,
+            None,
+            False,
+            "address must not contain control characters",
+        )
     try:
         address = ipaddress.ip_address(target)
     except ValueError:
-        return AddressResult(target, None, None, None, False, "address must be a literal IPv4 or IPv6 address")
+        return AddressResult(
+            target,
+            None,
+            None,
+            None,
+            False,
+            "address must be a literal IPv4 or IPv6 address",
+        )
 
     if address.is_unspecified:
         scope = "unspecified"
@@ -43,13 +59,15 @@ def classify_address(value: str) -> AddressResult:
         scope = "link-local"
     elif address.is_multicast:
         scope = "multicast"
-    elif address.is_private:
-        scope = "private"
     elif address.is_reserved:
         scope = "reserved"
+    elif address.is_private:
+        scope = "private"
     elif address.is_global:
         scope = "global"
     else:
         scope = "special"
 
-    return AddressResult(str(address), address.version, scope, address.reverse_pointer, True)
+    return AddressResult(
+        str(address), address.version, scope, address.reverse_pointer, True
+    )

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import socket
+from dataclasses import asdict, dataclass
 
+from .validation import has_control_characters
 
 _FAMILIES = {
     "any": socket.AF_UNSPEC,
@@ -36,25 +37,59 @@ def resolve_hostname_family(hostname: str, family: str = "any") -> DNSFamilyResu
     addresses or perform scanning/probing traffic.
     """
     if not isinstance(hostname, str):
-        return DNSFamilyResult("", family if isinstance(family, str) else "", (), False, "hostname must be a string")
+        return DNSFamilyResult(
+            "",
+            family if isinstance(family, str) else "",
+            (),
+            False,
+            "hostname must be a string",
+        )
     target = hostname.strip()
     if not target:
-        return DNSFamilyResult(hostname, family if isinstance(family, str) else "", (), False, "hostname is required")
-    if any(ord(character) < 32 or ord(character) == 127 for character in target):
-        return DNSFamilyResult(target, family if isinstance(family, str) else "", (), False, "hostname must not contain control characters")
+        return DNSFamilyResult(
+            hostname,
+            family if isinstance(family, str) else "",
+            (),
+            False,
+            "hostname is required",
+        )
+    if has_control_characters(target):
+        return DNSFamilyResult(
+            target,
+            family if isinstance(family, str) else "",
+            (),
+            False,
+            "hostname must not contain control characters",
+        )
     if not isinstance(family, str):
-        return DNSFamilyResult(target, "", (), False, "family must be one of: any, ipv4, ipv6")
+        return DNSFamilyResult(
+            target, "", (), False, "family must be one of: any, ipv4, ipv6"
+        )
     normalized_family = family.strip().lower()
     address_family = _FAMILIES.get(normalized_family)
     if address_family is None:
-        return DNSFamilyResult(target, normalized_family, (), False, "family must be one of: any, ipv4, ipv6")
+        return DNSFamilyResult(
+            target,
+            normalized_family,
+            (),
+            False,
+            "family must be one of: any, ipv4, ipv6",
+        )
 
     try:
-        records = socket.getaddrinfo(target, None, family=address_family, type=socket.SOCK_STREAM)
+        records = socket.getaddrinfo(
+            target, None, family=address_family, type=socket.SOCK_STREAM
+        )
     except OSError as exc:
         return DNSFamilyResult(target, normalized_family, (), False, str(exc))
 
-    addresses = tuple(sorted({record[4][0] for record in records}))
+    addresses = tuple(sorted({str(record[4][0]) for record in records}))
     if not addresses:
-        return DNSFamilyResult(target, normalized_family, (), False, f"resolver returned no {normalized_family} addresses")
+        return DNSFamilyResult(
+            target,
+            normalized_family,
+            (),
+            False,
+            f"resolver returned no {normalized_family} addresses",
+        )
     return DNSFamilyResult(target, normalized_family, addresses, True)

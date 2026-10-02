@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/tcp.schema.json",
+  "title": "NetScope tcp command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "port": {
+      "type": "integer"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "error",
+    "host",
+    "latency_ms",
+    "ok",
+    "port"
+  ],
+  "additionalProperties": false
+}

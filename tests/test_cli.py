@@ -7,7 +7,13 @@ import json
 import pytest
 
 from netscope import cli
-from netscope.diagnostics import DNSResult, InterfaceResult, PathResult, TCPResult, TCPSummaryResult
+from netscope.diagnostics import (
+    DNSResult,
+    InterfaceResult,
+    PathResult,
+    TCPResult,
+    TCPSummaryResult,
+)
 
 
 def test_interfaces_json_output(monkeypatch, capsys):
@@ -35,11 +41,26 @@ def test_tcp_failure_returns_nonzero(monkeypatch, capsys):
 
 
 def _summary(successes=2, failures=1):
-    return TCPSummaryResult("example.com", 443, 3, successes, failures, round(successes / 3 * 100, 2), 10.0, 15.0, 20.0, 4.08, True, ("timeout",) if failures else ())
+    return TCPSummaryResult(
+        "example.com",
+        443,
+        3,
+        successes,
+        failures,
+        round(successes / 3 * 100, 2),
+        10.0,
+        15.0,
+        20.0,
+        4.08,
+        True,
+        ("timeout",) if failures else (),
+    )
 
 
 def test_tcp_summary_human_output(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
     assert cli.main(["tcp-summary", "example.com", "443", "--count", "3"]) == 0
     output = capsys.readouterr().out
     assert "2/3 successful (66.67%)" in output
@@ -48,9 +69,15 @@ def test_tcp_summary_human_output(monkeypatch, capsys):
     assert "Failure details: timeout" in output
 
 
-def test_tcp_summary_require_all_returns_nonzero_on_partial_failure(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
-    assert cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 1
+def test_tcp_summary_require_all_returns_nonzero_on_partial_failure(
+    monkeypatch, capsys
+):
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
+    assert (
+        cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 1
+    )
     payload = json.loads(capsys.readouterr().out)
     assert payload["successes"] == 2
     assert payload["failures"] == 1
@@ -59,19 +86,44 @@ def test_tcp_summary_require_all_returns_nonzero_on_partial_failure(monkeypatch,
 
 
 def test_tcp_summary_require_all_succeeds_when_every_attempt_succeeds(monkeypatch):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary(3, 0))
-    assert cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 0
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary(3, 0)
+    )
+    assert (
+        cli.main(["tcp-summary", "example.com", "443", "--require-all", "--json"]) == 0
+    )
 
 
 def test_tcp_summary_min_success_rate_fails_below_threshold(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
-    assert cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", "80", "--json"]) == 1
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
+    assert (
+        cli.main(
+            ["tcp-summary", "example.com", "443", "--min-success-rate", "80", "--json"]
+        )
+        == 1
+    )
     assert json.loads(capsys.readouterr().out)["success_rate_percent"] == 66.67
 
 
 def test_tcp_summary_min_success_rate_succeeds_at_threshold(monkeypatch):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
-    assert cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", "66.67", "--json"]) == 0
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
+    assert (
+        cli.main(
+            [
+                "tcp-summary",
+                "example.com",
+                "443",
+                "--min-success-rate",
+                "66.67",
+                "--json",
+            ]
+        )
+        == 0
+    )
 
 
 @pytest.mark.parametrize("value", ["-1", "100.1"])
@@ -83,19 +135,42 @@ def test_tcp_summary_min_success_rate_rejects_out_of_range(value):
 
 def test_tcp_summary_health_gates_are_mutually_exclusive():
     with pytest.raises(SystemExit) as exc:
-        cli.main(["tcp-summary", "example.com", "443", "--require-all", "--min-success-rate", "90"])
+        cli.main(
+            [
+                "tcp-summary",
+                "example.com",
+                "443",
+                "--require-all",
+                "--min-success-rate",
+                "90",
+            ]
+        )
     assert exc.value.code == 2
 
 
 def test_tcp_summary_max_jitter_fails_above_threshold(monkeypatch, capsys):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
-    assert cli.main(["tcp-summary", "example.com", "443", "--max-jitter-ms", "4", "--json"]) == 1
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
+    assert (
+        cli.main(
+            ["tcp-summary", "example.com", "443", "--max-jitter-ms", "4", "--json"]
+        )
+        == 1
+    )
     assert json.loads(capsys.readouterr().out)["jitter_ms"] == 4.08
 
 
 def test_tcp_summary_max_jitter_succeeds_at_threshold(monkeypatch):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
-    assert cli.main(["tcp-summary", "example.com", "443", "--max-jitter-ms", "4.08", "--json"]) == 0
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
+    assert (
+        cli.main(
+            ["tcp-summary", "example.com", "443", "--max-jitter-ms", "4.08", "--json"]
+        )
+        == 0
+    )
 
 
 def test_tcp_summary_max_jitter_rejects_negative_value():
@@ -105,12 +180,34 @@ def test_tcp_summary_max_jitter_rejects_negative_value():
 
 
 def test_tcp_summary_combines_success_rate_and_jitter_gates(monkeypatch):
-    monkeypatch.setattr(cli, "summarize_tcp", lambda host, port, count, timeout: _summary())
-    assert cli.main(["tcp-summary", "example.com", "443", "--min-success-rate", "60", "--max-jitter-ms", "4"]) == 1
+    monkeypatch.setattr(
+        cli, "summarize_tcp", lambda host, port, count, timeout: _summary()
+    )
+    assert (
+        cli.main(
+            [
+                "tcp-summary",
+                "example.com",
+                "443",
+                "--min-success-rate",
+                "60",
+                "--max-jitter-ms",
+                "4",
+            ]
+        )
+        == 1
+    )
 
 
 def test_path_json_output(monkeypatch, capsys):
-    result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms",), False, True, "destination not reached")
+    result = PathResult(
+        "example.com",
+        12,
+        ("1 192.0.2.1 1.0 ms",),
+        False,
+        True,
+        "destination not reached",
+    )
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
     assert cli.main(["path", "example.com", "--max-hops", "12", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
@@ -119,8 +216,17 @@ def test_path_json_output(monkeypatch, capsys):
     assert payload["reached"] is False
 
 
-def test_path_require_reached_returns_nonzero_when_destination_not_reached(monkeypatch, capsys):
-    result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms",), False, True, "destination not reached")
+def test_path_require_reached_returns_nonzero_when_destination_not_reached(
+    monkeypatch, capsys
+):
+    result = PathResult(
+        "example.com",
+        12,
+        ("1 192.0.2.1 1.0 ms",),
+        False,
+        True,
+        "destination not reached",
+    )
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
     assert cli.main(["path", "example.com", "--require-reached", "--json"]) == 1
     payload = json.loads(capsys.readouterr().out)
@@ -129,7 +235,9 @@ def test_path_require_reached_returns_nonzero_when_destination_not_reached(monke
 
 
 def test_path_require_reached_succeeds_when_destination_reached(monkeypatch):
-    result = PathResult("example.com", 12, ("1 192.0.2.1 1.0 ms", "2 192.0.2.2 2.0 ms"), True, True)
+    result = PathResult(
+        "example.com", 12, ("1 192.0.2.1 1.0 ms", "2 192.0.2.2 2.0 ms"), True, True
+    )
     monkeypatch.setattr(cli, "trace_path", lambda host, max_hops, timeout: result)
     assert cli.main(["path", "example.com", "--require-reached", "--json"]) == 0
 

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/tcp-summary.schema.json",
+  "title": "NetScope tcp-summary command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "port": {
+      "type": "integer"
+    },
+    "attempts": {
+      "type": "integer"
+    },
+    "successes": {
+      "type": "integer"
+    },
+    "failures": {
+      "type": "integer"
+    },
+    "success_rate_percent": {
+      "type": "number"
+    },
+    "min_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "avg_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "max_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "jitter_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "baseline_avg_latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "latency_drift_percent": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "attempts",
+    "avg_latency_ms",
+    "baseline_avg_latency_ms",
+    "errors",
+    "failures",
+    "host",
+    "jitter_ms",
+    "latency_drift_percent",
+    "max_latency_ms",
+    "min_latency_ms",
+    "ok",
+    "port",
+    "success_rate_percent",
+    "successes"
+  ],
+  "additionalProperties": false
+}

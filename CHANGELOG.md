@@ -4,6 +4,28 @@ All notable changes to NetScope are documented here. The project follows semanti
 
 ## [Unreleased]
 
+### Added
+- `netscope tls HOST PORT` performs one bounded TLS handshake against an explicit host and port, reporting negotiated protocol/cipher, certificate subject/SANs, issuer, and days until expiry parsed from the peer certificate bytes with a stdlib-only DER reader. The handshake uses an unverified context on purpose so expired or self-signed certificates remain inspectable for monitoring; no application data is exchanged.
+- `tls --min-days-cert-valid DAYS` health gate for CI/CD certificate-expiry monitoring, returning exit code 1 when the certificate expires sooner while preserving the full diagnostic report.
+- `netscope ping HOST` sends a bounded number of ICMP echo requests (1–10, default 4) to one explicit host via the OS `ping`/`ping6` utility with a hard per-request timeout (max 10s) and per-request round-trip latency measurement, following the same subprocess discipline as `path`.
+- Saved TOML endpoint profiles with `netscope check --profile NAME` for cron/CI: named `tcp`, `tcp-summary`, and `tls` checks with thresholds, resolved from `--profiles FILE`, `./netscope-profiles.toml`, or `~/.config/netscope/profiles.toml`, exiting with the same structured codes (0/1/2) as the direct commands. A small built-in TOML parser covers the profile schema on Python 3.10.
+- Versioned JSON Schema documents for every command's JSON output, bundled at `src/netscope/schemas/`, printable via `netscope schema COMMAND`, with a CI contract test validating live `--json` output against each schema.
+- `tcp-summary --baseline FILE --max-latency-drift-pct PCT` for latency regression detection: compares current average latency against a saved `--json` report and returns exit code 1 when drift exceeds PCT percent, reporting `baseline_avg_latency_ms` and `latency_drift_percent` in human, JSON, and CSV output.
+- Structured `logging` for operational failures across diagnostics (DNS, TCP, TLS, ping, path, interfaces, profiles) in addition to the existing structured result error strings.
+- Ruff lint/format configuration and strict mypy type checking, enforced in CI alongside pytest.
+
+### Fixed
+- TCP ports are now validated at the argparse layer: `netscope tcp` and `netscope tcp-summary` reject out-of-range or non-integer ports as usage errors (exit code 2) before any diagnostic runs.
+- `__version__` is now single-sourced from installed package metadata instead of duplicating the pyproject version in `__init__.py`.
+- The control-character validation helper is now shared (`netscope.validation`) instead of being inlined in `address.py`, `network.py`, and `dns.py`.
+- Address and network-prefix classification now report `240.0.0.0/4` as `reserved` (checked before `private`), matching its RFC 1112 designation.
+- Unused imports and import ordering issues across the test suite.
+
+### Security
+- TLS diagnostics complete only the handshake and never transmit application data; the unverified context exists solely so monitoring can inspect expired or self-signed certificates.
+- Ping diagnostics reject hosts beginning with `-` and control characters before spawning the OS utility, which is invoked without a shell.
+- Saved profiles cannot widen any diagnostic bound; they only parameterize the same single-target checks with the same hard caps.
+
 ## [0.3.0] - 2026-09-17
 
 ### Added

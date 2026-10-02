@@ -20,7 +20,9 @@ def _record(family: int, address: str):
         ("ipv6", socket.AF_INET6, "2001:db8::10"),
     ],
 )
-def test_family_filter_is_passed_to_system_resolver(monkeypatch, requested, expected_family, address):
+def test_family_filter_is_passed_to_system_resolver(
+    monkeypatch, requested, expected_family, address
+):
     seen = {}
 
     def fake_getaddrinfo(host, port, *, family, type):
@@ -35,13 +37,21 @@ def test_family_filter_is_passed_to_system_resolver(monkeypatch, requested, expe
     assert result.hostname == "example.com"
     assert result.family == requested
     assert result.addresses == (address,)
-    assert seen == {"host": "example.com", "port": None, "family": expected_family, "type": socket.SOCK_STREAM}
+    assert seen == {
+        "host": "example.com",
+        "port": None,
+        "family": expected_family,
+        "type": socket.SOCK_STREAM,
+    }
 
 
 def test_any_family_uses_unspecified_family(monkeypatch):
     def fake_getaddrinfo(host, port, *, family, type):
         assert family == socket.AF_UNSPEC
-        return [_record(socket.AF_INET6, "2001:db8::2"), _record(socket.AF_INET, "192.0.2.2")]
+        return [
+            _record(socket.AF_INET6, "2001:db8::2"),
+            _record(socket.AF_INET, "192.0.2.2"),
+        ]
 
     monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
 

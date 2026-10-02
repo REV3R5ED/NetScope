@@ -31,7 +31,7 @@ Issues = "https://github.com/REV3R5ED/NetScope/issues"
 Changelog = "https://github.com/REV3R5ED/NetScope/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "pytest-cov>=6", "ruff>=0.8", "mypy>=1.13"]
 
 [project.scripts]
 netscope = "netscope.cli:main"
@@ -39,6 +39,23 @@ netscope = "netscope.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+netscope = ["schemas/*.json"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.format]
+# line-length is inherited from [tool.ruff]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true

@@ -18,7 +18,11 @@ NetScope makes common network diagnostics easy to run, understand, automate, and
 | `netscope dns HOST` | Diagnose name resolution | DNS resolution only | JSON / CSV |
 | `netscope tcp HOST PORT` | Test one explicit TCP endpoint | One bounded connection attempt | JSON / CSV |
 | `netscope tcp-summary HOST PORT` | Measure bounded endpoint reliability and latency | 1–10 bounded attempts | JSON / CSV + health gates |
+| `netscope tls HOST PORT` | Inspect one bounded TLS handshake and certificate | One bounded handshake, no application data | JSON / CSV + expiry gate |
+| `netscope ping HOST` | Send bounded ICMP echo requests to one host | 1–10 bounded OS ping invocations | JSON / CSV |
 | `netscope path HOST` | Inspect the route to one explicit destination | Bounded OS traceroute/tracert | JSON / CSV + reachability gate |
+| `netscope check --profile NAME` | Run a saved endpoint profile (tcp/tcp-summary/tls) | Same bounds as the underlying check | JSON / CSV + health gates |
+| `netscope schema COMMAND` | Print the versioned JSON Schema for a command | None | JSON |
 
 This separation is intentional: offline classification stays fully local, while active diagnostics require an explicit destination and enforce hard bounds. The result is a small toolkit that demonstrates network troubleshooting, cross-platform subprocess handling, typed/structured reporting, defensive guardrails, and CI-oriented exit semantics without broad scanning behavior.
 
@@ -28,7 +32,12 @@ Current capabilities include:
 - offline IPv4/IPv6 literal address and canonical network-prefix classification
 - DNS resolution diagnostics with optional IPv4/IPv6 family selection
 - bounded single-target TCP connectivity checks
+- bounded TLS handshake and certificate diagnostics with expiry health gates
+- bounded ICMP latency checks via the OS ping utility
 - bounded latency and reachability summaries with CI-friendly health gates
+- baseline-vs-current latency drift detection for tcp-summary regression monitoring
+- saved TOML endpoint profiles runnable from cron/CI with structured exit codes
+- versioned JSON Schema documents for every command's JSON output
 - bounded route/path diagnostics using the operating system traceroute utility
 - structured JSON and CSV output for automation and reporting
 - clear, human-readable CLI reports
@@ -71,7 +80,11 @@ netscope network 2001:db8::/126 --json
 netscope dns example.com --family ipv6 --json
 netscope tcp example.com 443 --timeout 2 --json
 netscope tcp-summary example.com 443 --count 5 --min-success-rate 80 --max-jitter-ms 25 --max-avg-latency-ms 150 --json
+netscope tls example.com 443 --min-days-cert-valid 30 --json
+netscope ping example.com --count 4 --json
 netscope path example.com --max-hops 12 --require-reached --json
+netscope check --profile prod-web --json
+netscope schema tls
 ```
 
 `netscope interfaces` performs read-only local inspection. On Python/platform combinations without `socket.if_nameindex`, it degrades gracefully and still reports resolved local-host addresses with a structured warning.
@@ -84,6 +97,48 @@ DNS diagnostics use the operating system resolver and provide deterministic norm
 
 `netscope tcp-summary` repeats that same single-endpoint diagnostic a small, explicitly bounded number of times (default 3, maximum 10). It reports successful and failed attempts plus minimum, average, maximum, and jitter latency metrics. Opt-in health gates can require all attempts, enforce minimum success rate, cap jitter, or cap average latency while preserving the complete report before a non-zero threshold exit.
 
+`--baseline FILE --max-latency-drift-pct PCT` extends those gates from static thresholds to trend detection: the baseline is a JSON report from an earlier `tcp-summary --json` run, and NetScope returns exit code 1 when current average latency drifts above the baseline by more than PCT percent. The comparison fields (`baseline_avg_latency_ms`, `latency_drift_percent`) are included in human, JSON, and CSV output.
+
+### TLS handshake diagnostics
+
+`netscope tls HOST PORT` performs one bounded TLS handshake against an explicit host and port and reports the negotiated protocol, cipher, certificate subject/SANs, issuer, and days until certificate expiry. The handshake intentionally uses an unverified client context so expired or self-signed certificates can still be inspected for monitoring; only the handshake completes and no application data is exchanged. `--min-days-cert-valid DAYS` turns the check into a CI/CD expiry monitor: it returns exit code 1 when the certificate expires sooner than DAYS while preserving the full diagnostic report.
+
+### Bounded ping
+
+`netscope ping HOST` sends a bounded number of ICMP echo requests (default 4, maximum 10) to one explicit host using the operating system's `ping`/`ping6` utility, the same subprocess approach as `path`. Each request runs with a hard per-request timeout (maximum 10 seconds) and round-trip latency is measured per request. `--family ipv4|ipv6` selects the address family.
+
+### Saved profiles and scheduled checks
+
+Endpoint checks can be saved as named TOML profiles and executed with `netscope check --profile NAME`, which is designed for cron and CI:
+
+```toml
+[prod-web]
+type = "tcp-summary"
+host = "example.com"
+port = 443
+count = 5
+min_success_rate = 95.0
+max_avg_latency_ms = 200.0
+
+[prod-tls]
+type = "tls"
+host = "example.com"
+port = 443
+min_days_cert_valid = 30.0
+```
+
+Profiles live in `./netscope-profiles.toml` or `~/.config/netscope/profiles.toml` (override with `--profiles FILE`). Supported check types are `tcp`, `tcp-summary`, and `tls`, each with the same hard bounds and structured exit codes (0 success, 1 failure or violated gate, 2 usage error) as the equivalent direct command. See [docs/profiles.md](docs/profiles.md).
+
+### Versioned JSON schemas
+
+Every command's JSON output has a versioned JSON Schema document bundled at `src/netscope/schemas/`. `netscope schema COMMAND` prints the document for automation and contract testing:
+
+```bash
+netscope schema tls
+```
+
+A CI contract test validates each command's `--json` output against its schema. See [docs/schemas.md](docs/schemas.md) for the versioning policy.
+
 ### Route/path diagnostics
 
 `netscope path HOST` invokes the platform's standard `traceroute` (POSIX) or `tracert` (Windows) utility for one explicit destination. It requests numeric output to avoid reverse-DNS lookups, never uses a shell, caps the route at 30 hops and per-hop waiting at 10 seconds, and preserves partial hop output when a destination is not reached. `--require-reached` can make incomplete reachability a non-zero automation result without discarding diagnostic context.
@@ -94,7 +149,7 @@ Every diagnostic command supports either `--json` or `--csv`. The options are mu
 
 ## Safety Scope
 
-NetScope is designed for defensive diagnostics and authorized environments. Development intentionally avoids exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning. TCP and path commands accept one explicit host per invocation; TCP commands accept one explicit port. Summary checks are hard-capped at 10 attempts. Path diagnostics are hard-capped at 30 hops and invoke the OS utility without a shell. Interface, literal-address, and network-prefix inspection are read-only; address and network-prefix classification are fully offline and never enumerate hosts.
+NetScope is designed for defensive diagnostics and authorized environments. Development intentionally avoids exploit delivery, stealth, credential attacks, persistence, unrestricted offensive scanning, CIDR sweeps, and port-range scanning. TCP, TLS, and path commands accept one explicit host per invocation; TCP and TLS commands accept one explicit port. Summary checks are hard-capped at 10 attempts. The TLS command completes only the handshake and exchanges no application data. Ping checks are hard-capped at 10 echo requests with a hard per-request timeout. Path diagnostics are hard-capped at 30 hops and invoke the OS utility without a shell. Saved profiles cannot widen these bounds: they only parameterize the same single-target checks. Interface, literal-address, and network-prefix inspection are read-only; address and network-prefix classification are fully offline and never enumerate hosts.
 
 ## Roadmap
 
@@ -121,6 +176,16 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 - [x] hardened input and CSV reporting behavior
 - [x] validate built release artifacts in CI
 - [ ] publish tagged portfolio release
+
+### Unreleased
+- [x] bounded TLS handshake and certificate diagnostics with CI expiry gates
+- [x] bounded ICMP ping diagnostics via the OS ping utility
+- [x] saved TOML endpoint profiles with `netscope check` for cron/CI
+- [x] versioned JSON Schema documents and a `netscope schema` subcommand
+- [x] tcp-summary baseline latency-drift regression detection
+- [x] ruff lint/format and mypy strict type checking in CI
+- [x] structured logging for operational failures
+- [x] TCP port validated at the argparse layer as a usage error
 
 ## Development
 

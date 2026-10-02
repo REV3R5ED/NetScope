@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/interfaces.schema.json",
+  "title": "NetScope interfaces command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "hostname": {
+      "type": "string"
+    },
+    "interfaces": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "addresses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "addresses",
+    "error",
+    "hostname",
+    "interfaces",
+    "ok"
+  ],
+  "additionalProperties": false
+}

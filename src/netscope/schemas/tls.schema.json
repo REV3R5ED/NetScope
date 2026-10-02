@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/REV3R5ED/NetScope/schemas/v1/tls.schema.json",
+  "title": "NetScope tls command output",
+  "version": 1,
+  "type": "object",
+  "properties": {
+    "host": {
+      "type": "string"
+    },
+    "port": {
+      "type": "integer"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "protocol": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cipher": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cipher_bits": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "subject": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "sans": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "issuer": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "cert_expires_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "days_until_expiry": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "cert_expires_at",
+    "cipher",
+    "cipher_bits",
+    "days_until_expiry",
+    "error",
+    "host",
+    "issuer",
+    "latency_ms",
+    "ok",
+    "port",
+    "protocol",
+    "sans",
+    "subject"
+  ],
+  "additionalProperties": false
+}
