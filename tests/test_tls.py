@@ -122,7 +122,11 @@ def test_check_tls_reports_handshake_and_certificate(monkeypatch):
     assert result.issuer is not None
     assert result.cert_expires_at == "2036-09-29T21:59:03+00:00"
     assert result.days_until_expiry is not None
-    assert 3640 < result.days_until_expiry <= 3650
+    expected_days = (
+        datetime(2036, 9, 29, 21, 59, 3, tzinfo=timezone.utc)
+        - datetime.now(timezone.utc)
+    ).total_seconds() / 86400
+    assert abs(result.days_until_expiry - expected_days) < 0.1
     assert result.error is None
 
 
