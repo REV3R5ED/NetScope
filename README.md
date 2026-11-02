@@ -2,7 +2,7 @@
 
 Defensive network visibility and diagnostics toolkit for operators, IT professionals, and security engineers.
 
-> Status: v0.3.0 release candidate; awaiting the first tagged GitHub release
+> Status: v0.3.0 released — see the [v0.3.0 release](https://github.com/REV3R5ED/NetScope/releases/tag/v0.3.0). Active development continues on main.
 
 ## Goals
 
@@ -46,19 +46,19 @@ Current capabilities include:
 
 Requires Python 3.10+.
 
-### Install the release candidate
+### Install the v0.3.0 release
 
-Until the first tagged release is published, install the reviewed `main` branch directly from GitHub:
+Install the published wheel from the GitHub Release:
 
 ```bash
-python -m pip install "git+https://github.com/REV3R5ED/NetScope.git@main"
+python -m pip install https://github.com/REV3R5ED/NetScope/releases/download/v0.3.0/netscope_toolkit-0.3.0-py3-none-any.whl
 netscope --help
 netscope interfaces
 netscope address 10.20.30.40
 netscope dns example.com --json
 ```
 
-Pin a commit SHA instead of `main` when reproducibility matters. Once `v0.3.0` is tagged, prefer that immutable tag for portfolio demos and operational evaluation.
+Pin a commit SHA instead of `main` when reproducibility matters; for portfolio demos and operational evaluation, prefer the immutable `v0.3.0` release.
 
 ### Contributor setup
 
@@ -189,7 +189,7 @@ NetScope is designed for defensive diagnostics and authorized environments. Deve
 
 ## Development
 
-The v0.3.0 release candidate aligns package/runtime version metadata with the code currently on `main` and documents the operational diagnostics as a distinct release boundary. CI covers Python 3.10–3.13 and validates the built source distribution and wheel before release. The remaining release step is to publish the first `v0.3.0` tag/GitHub Release only after the exact candidate commit passes those checks.
+The v0.3.0 release aligns package/runtime version metadata with the code on `main` and documents the operational diagnostics as a distinct release boundary. CI covers Python 3.10–3.13 and validates the built source distribution and wheel; the `v0.3.0` tag and GitHub Release are published.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and safety-relevant changes.
 
